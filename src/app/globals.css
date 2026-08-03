@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  background: theme("colors.bg");
+  color: theme("colors.ink");
+  font-family:
+    "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
+    "Malgun Gothic", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  word-break: keep-all;
+}
+
+/* 키보드 포커스가 항상 또렷하게 보이도록 (접근성) */
+:focus-visible {
+  outline: 3px solid theme("colors.brand.DEFAULT");
+  outline-offset: 2px;
+  border-radius: 12px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+@layer components {
+  /* 아이돌 키우기용 파스텔 그라데이션 무대 배경 */
+  .idol-stage {
+    background:
+      radial-gradient(120% 60% at 20% 0%, #ffdbef 0%, rgba(255, 219, 239, 0) 60%),
+      radial-gradient(120% 60% at 100% 20%, #e4dcff 0%, rgba(228, 220, 255, 0) 55%),
+      linear-gradient(180deg, #fff4fb 0%, #f2ecff 55%, #e6f3ff 100%);
+  }
+
+  /* 유리질 카드 */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 8px 24px -14px rgba(155, 124, 246, 0.45);
+  }
+
+  /* 반짝이는 그라데이션 텍스트 */
+  .text-gradient {
+    background: theme("backgroundImage.brand-gradient");
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
