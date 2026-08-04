@@ -26,6 +26,17 @@ export function createInitialStats(): Stats {
   };
 }
 
+/**
+ * 초기값(모두 50)부터 답변 기록을 순서대로 적용해 현재 능력치를 재계산한다.
+ * 선택을 바꿀 때 클램프(0~100) 손실 없이 정확히 다시 계산하기 위해 사용한다.
+ */
+export function statsFromAnswers(answers: AnswerRecord[]): Stats {
+  return answers.reduce(
+    (acc, a) => applyStatChanges(acc, a.appliedChanges),
+    createInitialStats(),
+  );
+}
+
 /** 0~100 범위로 제한한다. */
 export function clampStat(value: number): number {
   if (value < STAT_MIN) return STAT_MIN;

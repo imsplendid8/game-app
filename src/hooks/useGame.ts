@@ -7,10 +7,10 @@ import type { Choice, Question, SaveData } from "@/types/game";
 import { QUESTIONS_IN_ORDER } from "@/data/questions";
 import { clearSave, loadSave, writeSave } from "@/features/game/storage";
 import {
-  applyStatChanges,
   createInitialStats,
   dayFromIndex,
   isLastQuestionOfDay,
+  statsFromAnswers,
 } from "@/features/game/gameEngine";
 import { resolveEnding } from "@/features/game/endingResolver";
 import { SAVE_VERSION, TOTAL_QUESTIONS } from "@/features/game/constants";
@@ -94,28 +94,37 @@ export function useGame(): UseGame {
   const selectChoice = useCallback(
     (choiceId: string) => {
       if (!save || save.status !== "playing") return;
-      // 이미 선택했다면 중복 적용 금지.
-      if (save.selectedChoiceId) return;
 
       const question = QUESTIONS_IN_ORDER[save.currentQuestionIndex];
       if (!question) return;
       const choice = question.choices.find((c) => c.id === choiceId);
       if (!choice) return;
 
-      const nextStats = applyStatChanges(save.stats, choice.statChanges);
+      // 같은 선택이면 무시 (불필요한 저장 방지)
+      if (save.selectedChoiceId === choiceId) return;
+
+      // 현재 문제의 기존 답변을 제거하고 새 답변으로 교체 → 선택 변경 허용.
+      // (다음 문제로 넘어가기 전까지 언제든 다른 선택지로 바꿀 수 있다.)
+      const withoutCurrent = save.answers.filter(
+        (a) => a.questionId !== question.id,
+      );
+      const nextAnswers = [
+        ...withoutCurrent,
+        {
+          questionId: question.id,
+          choiceId: choice.id,
+          resultLabel: choice.resultLabel,
+          appliedChanges: choice.statChanges,
+        },
+      ];
+      // 초기값부터 전체 답변을 다시 접어 능력치를 정확히 재계산(클램프 손실 방지).
+      const nextStats = statsFromAnswers(nextAnswers);
+
       persist({
         ...save,
         stats: nextStats,
         selectedChoiceId: choiceId,
-        answers: [
-          ...save.answers,
-          {
-            questionId: question.id,
-            choiceId: choice.id,
-            resultLabel: choice.resultLabel,
-            appliedChanges: choice.statChanges,
-          },
-        ],
+        answers: nextAnswers,
       });
     },
     [save, persist],

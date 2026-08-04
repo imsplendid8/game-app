@@ -47,7 +47,7 @@ export default function PlayPage() {
 
   const index = save.currentQuestionIndex;
   const day = dayFromIndex(index);
-  const locked = Boolean(save.selectedChoiceId);
+  const answered = Boolean(save.selectedChoiceId);
   const lastOfDay = isLastQuestionOfDay(index);
 
   return (
@@ -66,7 +66,7 @@ export default function PlayPage() {
         </div>
       }
       footer={
-        locked ? (
+        answered ? (
           <Button fullWidth onClick={goNext}>
             {lastOfDay ? "오늘 업무 마치기" : "다음 메시지"}
           </Button>
@@ -90,12 +90,18 @@ export default function PlayPage() {
               key={choice.id}
               choice={choice}
               index={i}
-              locked={locked}
+              locked={false}
               selected={save.selectedChoiceId === choice.id}
               onSelect={selectChoice}
             />
           ))}
         </div>
+
+        {answered && (
+          <p className="px-1 text-center text-xs font-medium text-subtle">
+            💡 다른 선택지를 눌러 답을 바꿀 수 있어요.
+          </p>
+        )}
 
         {selectedChoice && <ResultPanel choice={selectedChoice} />}
       </div>

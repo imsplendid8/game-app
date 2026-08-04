@@ -11,6 +11,7 @@ import {
   positionInDay,
   statWithMaxChange,
   statWithMinChange,
+  statsFromAnswers,
 } from "./gameEngine";
 import type { Stats } from "@/types/game";
 
@@ -52,6 +53,49 @@ describe("applyStatChanges", () => {
       leaveChance: 0,
     });
     expect(stats.sense).toBe(50);
+  });
+});
+
+describe("statsFromAnswers (선택 변경 재계산)", () => {
+  const mk = (changes: Partial<import("@/types/game").StatChanges>) => ({
+    questionId: "q",
+    choiceId: "a",
+    resultLabel: "safe" as const,
+    appliedChanges: {
+      sense: 0,
+      work: 0,
+      mental: 0,
+      favor: 0,
+      leaveChance: 0,
+      ...changes,
+    },
+  });
+
+  it("답변이 없으면 초기값(모두 50)", () => {
+    expect(statsFromAnswers([])).toEqual({
+      sense: 50,
+      work: 50,
+      mental: 50,
+      favor: 50,
+      leaveChance: 50,
+    });
+  });
+
+  it("여러 답변을 순서대로 접어 계산한다", () => {
+    const stats = statsFromAnswers([mk({ sense: 10 }), mk({ sense: 5, work: -20 })]);
+    expect(stats.sense).toBe(65);
+    expect(stats.work).toBe(30);
+  });
+
+  it("선택을 바꿔 답변을 교체하면 클램프 손실 없이 정확히 재계산된다", () => {
+    // 원래: +10(클램프로 100 도달 가정), 이후 바꾼 답변으로 교체
+    const high = [mk({ favor: 10 }), mk({ favor: 10 }), mk({ favor: 10 }), mk({ favor: 10 }), mk({ favor: 10 })];
+    // favor: 50 -> 100 (클램프)
+    expect(statsFromAnswers(high).favor).toBe(100);
+    // 마지막 답변을 favor -30짜리로 "교체"한 경우를 재계산
+    const replaced = [...high.slice(0, 4), mk({ favor: -30 })];
+    // 50+10+10+10+10=90, then -30 => 60 (음수 클램프 아님, 정확)
+    expect(statsFromAnswers(replaced).favor).toBe(60);
   });
 });
 
