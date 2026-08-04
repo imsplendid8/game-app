@@ -32,3 +32,6 @@ next-env.d.ts
 
 # vercel
 .vercel
+
+# generated at build (gen-manifest.mjs)
+/public/manifest.webmanifest
