@@ -42,33 +42,31 @@ export const STAT_ICONS: Record<StatKey, string> = {
   leaveChance: "🏃",
 };
 
-/** 결과 라벨 화면 텍스트. */
+/** 결과 라벨 화면 텍스트(센스/무난/아찔). */
 export const RESULT_LABELS: Record<ResultLabel, string> = {
-  great: "센스 있는 대응",
-  safe: "무난한 대응",
-  awkward: "아쉬운 대응",
-  risky: "위험한 대응",
+  great: "센스",
+  safe: "무난",
+  risky: "아찔",
 };
 
 export const RESULT_EMOJI: Record<ResultLabel, string> = {
   great: "✨",
   safe: "🙂",
-  awkward: "😅",
-  risky: "⚠️",
+  risky: "😵",
 };
 
-/** 결과 라벨 "낮음" 순서 (동점 시 과도한 칭찬 회피, 6.4-6). risky가 가장 낮음. */
+/** 결과 라벨 "낮음" 순서 (동점 시 과도한 칭찬 회피, 6.4-6). 아찔이 가장 낮음. */
 export const RESULT_RANK: Record<ResultLabel, number> = {
   risky: 0,
-  awkward: 1,
-  safe: 2,
-  great: 3,
+  safe: 1,
+  great: 2,
 };
 
-export const TOTAL_QUESTIONS = 15;
-export const QUESTIONS_PER_DAY = 3;
+export const TOTAL_QUESTIONS = 10;
+export const QUESTIONS_PER_DAY = 2;
 export const TOTAL_DAYS = 5;
 
 /** localStorage 저장 키 (7.4). */
 export const SAVE_KEY = "kimnep-game-save-v1";
-export const SAVE_VERSION = 1;
+// 문항 구성이 15→10으로 바뀌어 이전 진행 데이터는 안전하게 초기화한다.
+export const SAVE_VERSION = 2;

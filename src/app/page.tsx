@@ -39,7 +39,7 @@ export default function StartPage() {
           무사히 수습을 통과시켜 주세요!
         </p>
         <p className="mt-4 rounded-full bg-white/70 px-3.5 py-1.5 text-xs font-bold text-brand-deep shadow-card backdrop-blur">
-          ⏱ 약 5분 · 총 15문제
+          ⏱ 약 5분 · 총 10문제
         </p>
       </div>
 

@@ -149,21 +149,21 @@ describe("동점 우선순위", () => {
   });
 });
 
-describe("일차/위치 계산", () => {
+describe("일차/위치 계산 (하루 2문제)", () => {
   it("인덱스로 일차를 계산한다", () => {
     expect(dayFromIndex(0)).toBe(1);
-    expect(dayFromIndex(2)).toBe(1);
-    expect(dayFromIndex(3)).toBe(2);
-    expect(dayFromIndex(14)).toBe(5);
+    expect(dayFromIndex(1)).toBe(1);
+    expect(dayFromIndex(2)).toBe(2);
+    expect(dayFromIndex(9)).toBe(5);
   });
   it("하루 안 위치를 계산한다", () => {
     expect(positionInDay(0)).toBe(1);
-    expect(positionInDay(2)).toBe(3);
-    expect(positionInDay(3)).toBe(1);
+    expect(positionInDay(1)).toBe(2);
+    expect(positionInDay(2)).toBe(1);
   });
   it("하루의 마지막 문제를 판별한다", () => {
-    expect(isLastQuestionOfDay(2)).toBe(true);
+    expect(isLastQuestionOfDay(1)).toBe(true);
     expect(isLastQuestionOfDay(0)).toBe(false);
-    expect(isLastQuestionOfDay(14)).toBe(true);
+    expect(isLastQuestionOfDay(9)).toBe(true);
   });
 });

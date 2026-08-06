@@ -124,7 +124,7 @@ export function sumStatChanges(answers: AnswerRecord[]): StatChanges {
 
 /** 결과 라벨별 등장 횟수. */
 export function countResultLabels(answers: AnswerRecord[]): PlaySummary {
-  const summary: PlaySummary = { great: 0, safe: 0, awkward: 0, risky: 0 };
+  const summary: PlaySummary = { great: 0, safe: 0, risky: 0 };
   answers.forEach((a) => {
     summary[a.resultLabel] += 1;
   });

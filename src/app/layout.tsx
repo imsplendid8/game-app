@@ -9,7 +9,7 @@ const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
 export const metadata: Metadata = {
   title: "신입사원 김넵 키우기",
   description:
-    "회사어를 해석하고 무사히 수습을 통과하세요. 5일간 15개의 메신저 상황에 답하는 캐주얼 직장생활 시뮬레이션.",
+    "회사어를 해석하고 무사히 수습을 통과하세요. 5일간 10개의 메신저 상황에 답하는 캐주얼 직장생활 시뮬레이션.",
   applicationName: "김넵 키우기",
   // iOS 홈 화면 추가 시 전체화면 앱처럼 실행
   appleWebApp: {

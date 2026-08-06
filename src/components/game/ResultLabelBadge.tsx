@@ -4,8 +4,7 @@ import { RESULT_EMOJI, RESULT_LABELS } from "@/features/game/constants";
 const STYLES: Record<ResultLabel, string> = {
   great: "bg-brand-gradient text-white shadow-glossy",
   safe: "bg-sky text-white",
-  awkward: "bg-stat-mental text-white",
-  risky: "bg-subtle text-white",
+  risky: "bg-stat-mental text-white",
 };
 
 /** 4단계 결과 라벨 배지. "정답/오답" 대신 사용. */

@@ -4,7 +4,7 @@ import type { AnswerRecord, Choice, ResultLabel, Stats } from "@/types/game";
 import { applyStatChanges, createInitialStats } from "./gameEngine";
 import { resolveEnding } from "./endingResolver";
 
-/** 선택 전략에 따라 15문제를 끝까지 진행한 결과. */
+/** 선택 전략에 따라 전체 문제를 끝까지 진행한 결과. */
 function simulate(pick: (choices: Choice[]) => Choice): {
   stats: Stats;
   answers: AnswerRecord[];
@@ -47,7 +47,7 @@ describe("전체 플레이 시뮬레이션", () => {
   });
 
   it("어떤 전략에서도 모든 능력치가 0~100 범위를 벗어나지 않는다", () => {
-    const strategies: ResultLabel[] = ["great", "safe", "awkward", "risky"];
+    const strategies: ResultLabel[] = ["great", "safe", "risky"];
     for (const label of strategies) {
       const { stats } = simulate(byLabel(label));
       for (const value of Object.values(stats)) {
@@ -57,32 +57,20 @@ describe("전체 플레이 시뮬레이션", () => {
     }
   });
 
-  it("네 엔딩이 모두 어떤 선택 조합으로든 도달 가능하다", () => {
-    // great, risky는 위에서 확인. trusted / my-pace 경로를 구성한다.
+  it("네 엔딩 중 ace·survival과 중간 엔딩이 도달 가능하다", () => {
     const reached = new Set<string>();
     const great = simulate(byLabel("great"));
     reached.add(resolveEnding(great.stats, great.answers));
     const risky = simulate(byLabel("risky"));
     reached.add(resolveEnding(risky.stats, risky.answers));
 
-    // 믿는 신입: 처음 몇 개만 great(능력치 확보), 나머지는 safe로 완만히.
-    const trusted = simulate((choices) => {
-      return choices.find((c) => c.resultLabel === "safe") ?? choices[0];
-    });
-    reached.add(resolveEnding(trusted.stats, trusted.answers));
-
-    // 마이웨이: safe/awkward 섞어 중간값 유지.
-    let toggle = false;
-    const mypace = simulate((choices) => {
-      toggle = !toggle;
-      const want: ResultLabel = toggle ? "awkward" : "safe";
-      return choices.find((c) => c.resultLabel === want) ?? choices[0];
-    });
-    reached.add(resolveEnding(mypace.stats, mypace.answers));
+    // 무난 위주 플레이는 중간 엔딩(믿는 신입 또는 마이웨이)에 도달한다.
+    const moderate = simulate(byLabel("safe"));
+    reached.add(resolveEnding(moderate.stats, moderate.answers));
 
     expect(reached.has("ending-ace")).toBe(true);
     expect(reached.has("ending-survival")).toBe(true);
-    // trusted 또는 my-pace 중 최소 하나 이상은 나와야 한다.
+    // ace/survival이 아닌 중간 엔딩도 최소 하나 나와야 한다.
     expect(
       reached.has("ending-trusted") || reached.has("ending-my-pace"),
     ).toBe(true);

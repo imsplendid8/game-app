@@ -13,7 +13,7 @@ import { buildFinalReport } from "@/features/game/selectors";
 import { STAT_ICONS, STAT_LABELS } from "@/features/game/constants";
 import type { ResultLabel } from "@/types/game";
 
-const SUMMARY_ORDER: ResultLabel[] = ["great", "safe", "awkward", "risky"];
+const SUMMARY_ORDER: ResultLabel[] = ["great", "safe", "risky"];
 
 export default function EndingPage() {
   const router = useRouter();

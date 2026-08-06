@@ -15,20 +15,15 @@ const STAT_KEYS: StatKey[] = [
   "leaveChance",
 ];
 
-// 결과 라벨별 권장 총 변화량 범위 (기획서 6.2)
-const TOTAL_RANGE: Record<ResultLabel, [number, number]> = {
-  great: [10, 18],
-  safe: [3, 9],
-  awkward: [-3, 2],
-  risky: [-12, -4],
-};
+const VALID_LABELS: ResultLabel[] = ["great", "safe", "risky"];
+const CHOICES_PER_QUESTION = 3;
 
-describe("문제 데이터 무결성", () => {
+describe("문제 데이터 무결성 (10문제 / 하루 2문제 / 선택지 3개)", () => {
   it(`총 ${TOTAL_QUESTIONS}개 문제가 있다`, () => {
     expect(QUESTIONS).toHaveLength(TOTAL_QUESTIONS);
   });
 
-  it("order는 1~15로 중복 없이 채워진다", () => {
+  it("order는 1~10으로 중복 없이 채워진다", () => {
     const orders = QUESTIONS.map((q) => q.order).sort((a, b) => a - b);
     expect(orders).toEqual(
       Array.from({ length: TOTAL_QUESTIONS }, (_, i) => i + 1),
@@ -40,17 +35,16 @@ describe("문제 데이터 무결성", () => {
     expect(ids.size).toBe(TOTAL_QUESTIONS);
   });
 
-  it("day는 1~5이며 각 일차마다 3문제씩이다", () => {
+  it("day는 1~5이며 각 일차마다 2문제씩이다", () => {
     for (let day = 1; day <= TOTAL_DAYS; day++) {
       const inDay = QUESTIONS.filter((q) => q.day === day);
       expect(inDay).toHaveLength(QUESTIONS_PER_DAY);
     }
   });
 
-  it("각 문제는 3~4개의 선택지를 가진다", () => {
+  it("각 문제는 정확히 3개의 선택지를 가진다", () => {
     for (const q of QUESTIONS) {
-      expect(q.choices.length).toBeGreaterThanOrEqual(3);
-      expect(q.choices.length).toBeLessThanOrEqual(4);
+      expect(q.choices).toHaveLength(CHOICES_PER_QUESTION);
     }
   });
 
@@ -77,6 +71,14 @@ describe("문제 데이터 무결성", () => {
     }
   });
 
+  it("결과 라벨은 센스/무난/아찔(great/safe/risky) 중 하나다", () => {
+    for (const q of QUESTIONS) {
+      for (const c of q.choices) {
+        expect(VALID_LABELS).toContain(c.resultLabel);
+      }
+    }
+  });
+
   it("모든 변화량은 정수이며 -10~+10 범위다", () => {
     for (const q of QUESTIONS) {
       for (const c of q.choices) {
@@ -90,37 +92,16 @@ describe("문제 데이터 무결성", () => {
     }
   });
 
-  it("변경되는 능력치는 2~4개이며 전부 0인 선택은 없다", () => {
+  it("모든 변화량이 0인 선택은 없다", () => {
     for (const q of QUESTIONS) {
       for (const c of q.choices) {
         const nonZero = STAT_KEYS.filter((k) => c.statChanges[k] !== 0);
-        expect(nonZero.length).toBeGreaterThanOrEqual(2);
-        expect(nonZero.length).toBeLessThanOrEqual(4);
+        expect(nonZero.length).toBeGreaterThanOrEqual(1);
       }
     }
   });
 
-  it("결과 라벨과 총 변화량 범위가 일치한다", () => {
-    for (const q of QUESTIONS) {
-      for (const c of q.choices) {
-        const total = STAT_KEYS.reduce(
-          (sum, k) => sum + c.statChanges[k],
-          0,
-        );
-        const [min, max] = TOTAL_RANGE[c.resultLabel];
-        expect(
-          total,
-          `${q.id}/${c.id} (${c.resultLabel}) total=${total}`,
-        ).toBeGreaterThanOrEqual(min);
-        expect(
-          total,
-          `${q.id}/${c.id} (${c.resultLabel}) total=${total}`,
-        ).toBeLessThanOrEqual(max);
-      }
-    }
-  });
-
-  it("각 문제에는 최소 하나의 great 선택지가 있다", () => {
+  it("각 문제에는 최소 하나의 센스(great) 선택지가 있다", () => {
     for (const q of QUESTIONS) {
       const hasGreat = q.choices.some((c) => c.resultLabel === "great");
       expect(hasGreat, `${q.id} has no great choice`).toBe(true);

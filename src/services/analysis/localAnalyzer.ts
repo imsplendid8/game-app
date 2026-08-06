@@ -20,13 +20,12 @@ function pickBadge(labels: ResultLabel[]): ResultLabel {
   const counts: Record<ResultLabel, number> = {
     great: 0,
     safe: 0,
-    awkward: 0,
     risky: 0,
   };
   labels.forEach((l) => {
     counts[l] += 1;
   });
-  const order: ResultLabel[] = ["great", "safe", "awkward", "risky"];
+  const order: ResultLabel[] = ["great", "safe", "risky"];
   let best: ResultLabel = "safe";
   let bestCount = -1;
   order.forEach((label) => {

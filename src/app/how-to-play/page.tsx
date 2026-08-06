@@ -104,7 +104,7 @@ export default function HowToPlayPage() {
             5일간의 수습 기간
           </h2>
           <p className="mt-3 text-sm leading-relaxed text-subtle">
-            하루에 3개씩, 5일 동안 총 15개의 상황에 답해요. 하루가 끝날 때마다
+            하루에 2개씩, 5일 동안 총 10개의 상황에 답해요. 하루가 끝날 때마다
             그날의 대응을 돌아보는 리포트를 받고, 마지막 날에는 수습평가로 4개
             엔딩 중 하나를 만나게 됩니다.
           </p>

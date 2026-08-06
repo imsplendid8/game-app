@@ -3,7 +3,8 @@
 > 문서 버전: v1.0  
 > 목표 플랫폼: 세로형 모바일 웹  
 > 1회 플레이 목표 시간: 약 5분  
-> 확정 기술 스택: **Next.js(App Router) + TypeScript + Tailwind CSS**
+> 확정 기술 스택: **Next.js(App Router) + TypeScript + Tailwind CSS**  
+> ⚠️ 1차 버전 문항 확정본은 `docs/claude-code-10-questions.md`다(총 10문제 · 하루 2문제 · 결과 라벨 센스/무난/아찔). 아래 5.1의 15문제 표와 4단계 라벨은 이전 방향이며, 구현은 10문제 문서를 우선한다.
 
 ## 0. 확정안 요약
 

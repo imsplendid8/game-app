@@ -9,8 +9,8 @@ export type Stats = Record<StatKey, number>;
 /** 선택의 능력치 변화량. 미변경은 0. -10 ~ +10 정수. */
 export type StatChanges = Record<StatKey, number>;
 
-/** 4단계 결과 라벨. "정답/오답" 대신 사용. */
-export type ResultLabel = "great" | "safe" | "awkward" | "risky";
+/** 3단계 결과 라벨(센스/무난/아찔). "정답/오답" 대신 사용. */
+export type ResultLabel = "great" | "safe" | "risky";
 
 /** 문제 안의 답변 선택지. */
 export interface Choice {
@@ -106,6 +106,5 @@ export interface GameAnalysis {
 export interface PlaySummary {
   great: number;
   safe: number;
-  awkward: number;
   risky: number;
 }
