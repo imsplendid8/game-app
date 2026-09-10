@@ -5,6 +5,8 @@ import { dataSource } from '@/database/data-source';
 import { HealthModule } from '@/modules/health/health.module';
 import { InstitutionsModule } from '@/modules/institutions/institutions.module';
 import { ExperiencesModule } from '@/modules/experiences/experiences.module';
+import { ExperienceRunsModule } from '@/modules/experience-runs/experience-runs.module';
+import { CrawlerModule } from '@/crawler/crawler.module';
 
 @Module({
   imports: [
@@ -16,6 +18,8 @@ import { ExperiencesModule } from '@/modules/experiences/experiences.module';
     HealthModule,
     InstitutionsModule,
     ExperiencesModule,
+    ExperienceRunsModule,
+    CrawlerModule,
   ],
   controllers: [],
   providers: [],
