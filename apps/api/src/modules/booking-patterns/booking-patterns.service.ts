@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { BookingPattern, PatternType } from './entities/booking-pattern.entity';
 import { PatternEvidence } from './entities/pattern-evidence.entity';
+import { BookingPrediction } from './entities/booking-prediction.entity';
 import { ExperienceRun } from '@/modules/experience-runs/experience-runs.entity';
 
 @Injectable()
@@ -12,6 +13,8 @@ export class BookingPatternsService {
     private bookingPatternsRepository: Repository<BookingPattern>,
     @InjectRepository(PatternEvidence)
     private patternEvidenceRepository: Repository<PatternEvidence>,
+    @InjectRepository(BookingPrediction)
+    private bookingPredictionsRepository: Repository<BookingPrediction>,
   ) {}
 
   async createPattern(
@@ -133,5 +136,90 @@ export class BookingPatternsService {
     }
 
     return result;
+  }
+
+  async createPrediction(
+    experienceId: string,
+    predictedBookingOpenAt: Date,
+    confidence: number,
+    patternId?: string,
+    predictedExperienceDate?: string,
+    expiresAt?: Date,
+  ): Promise<BookingPrediction> {
+    const prediction = this.bookingPredictionsRepository.create({
+      experienceId,
+      predictedBookingOpenAt,
+      confidence,
+      patternId,
+      predictedExperienceDate,
+      expiresAt,
+    });
+
+    return this.bookingPredictionsRepository.save(prediction);
+  }
+
+  async getPredictionsForExperience(
+    experienceId: string,
+    includeExpired: boolean = false,
+  ): Promise<BookingPrediction[]> {
+    const now = new Date();
+    const qb = this.bookingPredictionsRepository
+      .createQueryBuilder('p')
+      .where('p.experience_id = :experienceId', { experienceId });
+
+    if (!includeExpired) {
+      qb.andWhere('(p.expires_at IS NULL OR p.expires_at > :now)', { now });
+    }
+
+    return qb.orderBy('p.predicted_booking_open_at', 'ASC').getMany();
+  }
+
+  async getUpcomingPredictions(
+    hoursAhead: number = 168,
+  ): Promise<BookingPrediction[]> {
+    const now = new Date();
+    const future = new Date(now.getTime() + hoursAhead * 60 * 60 * 1000);
+
+    return this.bookingPredictionsRepository.find({
+      where: {
+        predictedBookingOpenAt: (() => now as any)(),
+      },
+      order: { predictedBookingOpenAt: 'ASC' },
+    });
+  }
+
+  async verifyPrediction(
+    predictionId: string,
+    actualBookingOpenAt: Date,
+  ): Promise<BookingPrediction> {
+    const prediction = await this.bookingPredictionsRepository.findOne({
+      where: { id: predictionId },
+    });
+
+    if (!prediction) {
+      throw new Error('Prediction not found');
+    }
+
+    prediction.actualBookingOpenAt = actualBookingOpenAt;
+    prediction.verifiedAt = new Date();
+
+    return this.bookingPredictionsRepository.save(prediction);
+  }
+
+  async getHighConfidencePredictions(
+    threshold: number = 0.8,
+    limit: number = 50,
+  ): Promise<BookingPrediction[]> {
+    const now = new Date();
+
+    return this.bookingPredictionsRepository
+      .createQueryBuilder('p')
+      .where('p.confidence >= :threshold', { threshold })
+      .andWhere('(p.expires_at IS NULL OR p.expires_at > :now)', { now })
+      .andWhere('p.verified_at IS NULL')
+      .orderBy('p.confidence', 'DESC')
+      .addOrderBy('p.predicted_booking_open_at', 'ASC')
+      .take(limit)
+      .getMany();
   }
 }
