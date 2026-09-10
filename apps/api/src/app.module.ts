@@ -6,6 +6,8 @@ import { HealthModule } from '@/modules/health/health.module';
 import { InstitutionsModule } from '@/modules/institutions/institutions.module';
 import { ExperiencesModule } from '@/modules/experiences/experiences.module';
 import { ExperienceRunsModule } from '@/modules/experience-runs/experience-runs.module';
+import { ChangeLogsModule } from '@/modules/change-logs/change-logs.module';
+import { BookingPatternsModule } from '@/modules/booking-patterns/booking-patterns.module';
 import { CrawlerModule } from '@/crawler/crawler.module';
 
 @Module({
@@ -19,6 +21,8 @@ import { CrawlerModule } from '@/crawler/crawler.module';
     InstitutionsModule,
     ExperiencesModule,
     ExperienceRunsModule,
+    ChangeLogsModule,
+    BookingPatternsModule,
     CrawlerModule,
   ],
   controllers: [],
