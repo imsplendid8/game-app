@@ -54,9 +54,15 @@ export class BookingPatternsService {
       updatedAt: new Date(),
     });
 
-    return this.bookingPatternsRepository.findOne({
+    const pattern = await this.bookingPatternsRepository.findOne({
       where: { id: patternId },
     });
+
+    if (!pattern) {
+      throw new Error(`Pattern not found: ${patternId}`);
+    }
+
+    return pattern;
   }
 
   async recordEvidence(

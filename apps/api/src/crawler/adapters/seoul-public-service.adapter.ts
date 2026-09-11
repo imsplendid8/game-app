@@ -68,7 +68,7 @@ export class SeoulPublicServiceAdapter extends BaseAdapter {
       description: program.PROGCONTENT,
       programUrl: program.PROGURL,
       bookingUrl: program.REVSTDSNSURL || program.PROGURL,
-      experienceDate: this.parseDate(program.PROGSTARTDATE) || undefined,
+      experienceDate: this.parseDate(program.REVSTARTDATE) || undefined,
       bookingOpenAt: this.parseDate(program.REVSTDT),
       bookingCloseAt: this.parseDate(program.REVEDT),
       capacity,

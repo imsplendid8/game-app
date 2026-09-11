@@ -24,9 +24,9 @@ export interface ExperienceData {
   description?: string;
   programUrl?: string;
   bookingUrl?: string;
-  experienceDate?: Date;
-  bookingOpenAt?: Date;
-  bookingCloseAt?: Date;
+  experienceDate?: Date | null;
+  bookingOpenAt?: Date | null;
+  bookingCloseAt?: Date | null;
   capacity?: number;
   price?: number;
   ageGroup?: string;

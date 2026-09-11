@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, MoreThanOrEqual } from 'typeorm';
 import { ExperienceRun } from './experience-runs.entity';
 import { CreateExperienceRunDto } from './dto/create-experience-run.dto';
 
@@ -42,7 +42,7 @@ export class ExperienceRunsService {
     const today = new Date();
     return await this.experienceRunsRepository.find({
       where: {
-        experienceDate: { greaterThanOrEqual: today },
+        experienceDate: MoreThanOrEqual(today),
         status: 'OPEN',
       },
       relations: ['experience'],

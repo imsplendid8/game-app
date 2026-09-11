@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, MoreThanOrEqual } from 'typeorm';
 import {
   ChangeLog,
   ChangeType,
@@ -71,13 +71,7 @@ export class ChangeLogsService {
 
     return this.changeLogsRepository.find({
       where: {
-        detectedAt: (() => {
-          const qb = this.changeLogsRepository.createQueryBuilder();
-          return qb.query &&
-            typeof qb.query === 'function'
-            ? { $gte: since }
-            : since;
-        })() as any,
+        detectedAt: MoreThanOrEqual(since),
       },
       order: { detectedAt: 'DESC' },
     });
