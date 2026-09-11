@@ -25,6 +25,9 @@ import { JobsModule } from '@/modules/jobs/jobs.module';
       redis: {
         host: process.env.REDIS_HOST || 'localhost',
         port: parseInt(process.env.REDIS_PORT || '6379'),
+        password: process.env.REDIS_PASSWORD || 'redis_dev_password',
+        maxRetriesPerRequest: null,
+        enableReadyCheck: false,
       },
     }),
     TypeOrmModule.forRoot(dataSource.options),

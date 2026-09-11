@@ -178,4 +178,8 @@ export class JobsService implements OnModuleInit {
     );
     return job;
   }
+
+  getQueues(): Queue[] {
+    return [this.crawlerQueue, this.notificationDeliveryQueue];
+  }
 }
