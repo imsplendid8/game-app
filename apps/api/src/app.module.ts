@@ -8,6 +8,8 @@ import { ExperiencesModule } from '@/modules/experiences/experiences.module';
 import { ExperienceRunsModule } from '@/modules/experience-runs/experience-runs.module';
 import { ChangeLogsModule } from '@/modules/change-logs/change-logs.module';
 import { BookingPatternsModule } from '@/modules/booking-patterns/booking-patterns.module';
+import { UsersModule } from '@/modules/users/users.module';
+import { NotificationsModule } from '@/modules/notifications/notifications.module';
 import { CrawlerModule } from '@/crawler/crawler.module';
 
 @Module({
@@ -23,6 +25,8 @@ import { CrawlerModule } from '@/crawler/crawler.module';
     ExperienceRunsModule,
     ChangeLogsModule,
     BookingPatternsModule,
+    UsersModule,
+    NotificationsModule,
     CrawlerModule,
   ],
   controllers: [],
