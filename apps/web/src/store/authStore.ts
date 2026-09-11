@@ -22,7 +22,7 @@ export interface AuthState {
   hydrate: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set, get) => ({
+export const useAuthStore = create<AuthState>((set, _get) => ({
   user: null,
   accessToken: null,
   refreshToken: null,

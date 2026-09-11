@@ -10,7 +10,7 @@ interface MainLayoutProps {
 
 export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const router = useRouter();
-  const { user, logout } = useAuthStore();
+  const { logout } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   const handleLogout = () => {

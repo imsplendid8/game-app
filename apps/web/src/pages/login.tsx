@@ -21,8 +21,9 @@ export default function LoginPage() {
       const response = await apiClient.login(email, password);
       login(response, response.accessToken, response.refreshToken);
       router.push('/dashboard');
-    } catch (err: any) {
-      setError(err.response?.data?.message || '로그인에 실패했습니다.');
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      setError(error.response?.data?.message || '로그인에 실패했습니다.');
     } finally {
       setIsLoading(false);
     }

@@ -86,7 +86,7 @@ class ApiClient {
     return response.data;
   }
 
-  async updatePreferences(preferences: Record<string, any>) {
+  async updatePreferences(preferences: Record<string, unknown>) {
     const response = await this.client.patch('/users/preferences', preferences);
     return response.data;
   }
@@ -105,7 +105,7 @@ class ApiClient {
   }
 
   // Experience endpoints
-  async getExperiences(params?: Record<string, any>) {
+  async getExperiences(params?: Record<string, unknown>) {
     const response = await this.client.get('/experiences', { params });
     return response.data;
   }
@@ -116,7 +116,7 @@ class ApiClient {
   }
 
   // Notifications endpoints
-  async getNotifications(params?: Record<string, any>) {
+  async getNotifications(params?: Record<string, unknown>) {
     const response = await this.client.get('/notifications', { params });
     return response.data;
   }

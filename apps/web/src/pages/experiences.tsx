@@ -188,7 +188,10 @@ export default function ExperiencesPage() {
 
                 {/* Actions */}
                 <div className="flex gap-2">
-                  <button className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors">
+                  <button
+                    onClick={() => router.push(`/experiences/${exp.id}`)}
+                    className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                  >
                     자세히 보기
                   </button>
                   <button className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
