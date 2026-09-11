@@ -1,20 +1,57 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuthStore } from '@/store/authStore';
+import { apiClient } from '@/lib/api';
 import { MainLayout } from '@/components/layouts/MainLayout';
 import { FiSearch, FiFilter, FiMapPin, FiDollarSign, FiUsers, FiBookmark } from 'react-icons/fi';
+
+interface Experience {
+  id: number;
+  name: string;
+  institution: string;
+  location: string;
+  price: number;
+  ageGroup: string;
+  rating: number;
+  reviews: number;
+  image: string;
+}
 
 export default function ExperiencesPage() {
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
+  const [experiences, setExperiences] = useState<Experience[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push('/login');
     }
   }, [isAuthenticated, isLoading, router]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const fetchExperiences = async () => {
+      try {
+        setIsLoadingData(true);
+        setError(null);
+        const data = await apiClient.getExperiences();
+        setExperiences(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error('경험 데이터 로드 실패:', err);
+        setError('프로그램을 불러올 수 없습니다.');
+        setExperiences(defaultExperiences);
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+
+    fetchExperiences();
+  }, [isAuthenticated]);
 
   if (isLoading || !isAuthenticated) {
     return (
@@ -24,7 +61,7 @@ export default function ExperiencesPage() {
     );
   }
 
-  const experiences = [
+  const defaultExperiences: Experience[] = [
     {
       id: 1,
       name: '과학관 과학 체험',
@@ -93,9 +130,23 @@ export default function ExperiencesPage() {
     },
   ];
 
+  const filteredExperiences = experiences.filter((exp) => {
+    const matchesSearch = exp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      exp.institution.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFilter = !selectedFilter || selectedFilter === '전체' || exp.ageGroup.includes(selectedFilter);
+    return matchesSearch && matchesFilter;
+  });
+
   return (
     <MainLayout>
       <div className="space-y-8">
+        {/* Error Message */}
+        {error && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <p className="text-yellow-800">{error}</p>
+          </div>
+        )}
+
         {/* Page Header */}
         <div>
           <h1 className="text-3xl font-bold text-gray-900">프로그램 둘러보기</h1>
@@ -141,8 +192,13 @@ export default function ExperiencesPage() {
         </div>
 
         {/* Experiences Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {experiences.map((exp) => (
+        {isLoadingData ? (
+          <div className="text-center py-12">
+            <div className="text-lg text-gray-600">프로그램을 불러오는 중...</div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredExperiences.map((exp) => (
             <div
               key={exp.id}
               className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow overflow-hidden"
@@ -200,8 +256,9 @@ export default function ExperiencesPage() {
                 </div>
               </div>
             </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         {/* Pagination */}
         <div className="flex justify-center gap-2">

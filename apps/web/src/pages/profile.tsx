@@ -1,17 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuthStore } from '@/store/authStore';
+import { apiClient } from '@/lib/api';
 import { MainLayout } from '@/components/layouts/MainLayout';
 import { FiEdit2, FiSave, FiX, FiLock } from 'react-icons/fi';
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, isLoading, isAuthenticated } = useAuthStore();
+  const { user, isLoading, isAuthenticated, setUser } = useAuthStore();
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState<'profile' | 'children' | 'notifications' | 'password'>('profile');
+  const [isSaving, setIsSaving] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [formData, setFormData] = useState({
-    profileName: user?.profileName || '',
-    email: user?.email || '',
+    profileName: '',
+    email: '',
     childrenAges: '6,10',
   });
   const [password, setPassword] = useState({
@@ -20,11 +23,21 @@ export default function ProfilePage() {
     confirm: '',
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push('/login');
     }
   }, [isAuthenticated, isLoading, router]);
+
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        profileName: user.profileName || '',
+        email: user.email || '',
+        childrenAges: '6,10',
+      });
+    }
+  }, [user]);
 
   if (isLoading || !isAuthenticated) {
     return (
@@ -34,22 +47,53 @@ export default function ProfilePage() {
     );
   }
 
-  const handleSaveProfile = () => {
-    setIsEditing(false);
+  const handleSaveProfile = async () => {
+    try {
+      setIsSaving(true);
+      setMessage(null);
+      await apiClient.updateProfile(formData.profileName, [6, 10]);
+      setMessage({ type: 'success', text: '프로필이 저장되었습니다.' });
+      setIsEditing(false);
+      if (user) {
+        setUser({ ...user, profileName: formData.profileName });
+      }
+    } catch (error) {
+      console.error('프로필 저장 실패:', error);
+      setMessage({ type: 'error', text: '프로필 저장에 실패했습니다.' });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCancel = () => {
-    setFormData({
-      profileName: user?.profileName || '',
-      email: user?.email || '',
-      childrenAges: '6,10',
-    });
+    if (user) {
+      setFormData({
+        profileName: user.profileName || '',
+        email: user.email || '',
+        childrenAges: '6,10',
+      });
+    }
     setIsEditing(false);
   };
 
   return (
     <MainLayout>
       <div className="max-w-2xl mx-auto space-y-8">
+        {/* Messages */}
+        {message && (
+          <div
+            className={`rounded-lg p-4 ${
+              message.type === 'success'
+                ? 'bg-green-50 border border-green-200'
+                : 'bg-red-50 border border-red-200'
+            }`}
+          >
+            <p className={message.type === 'success' ? 'text-green-800' : 'text-red-800'}>
+              {message.text}
+            </p>
+          </div>
+        )}
+
         {/* Page Header */}
         <div>
           <h1 className="text-3xl font-bold text-gray-900">프로필 설정</h1>
@@ -145,14 +189,16 @@ export default function ProfilePage() {
                 <div className="flex gap-2 pt-4">
                   <button
                     onClick={handleSaveProfile}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    disabled={isSaving}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     <FiSave size={18} />
-                    저장
+                    {isSaving ? '저장 중...' : '저장'}
                   </button>
                   <button
                     onClick={handleCancel}
-                    className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                    disabled={isSaving}
+                    className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     <FiX size={18} />
                     취소
