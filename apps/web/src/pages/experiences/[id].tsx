@@ -109,7 +109,14 @@ export default function ExperienceDetailPage() {
       alert('날짜를 선택해주세요');
       return;
     }
-    router.push('/bookings');
+    router.push({
+      pathname: '/bookings/create',
+      query: {
+        experienceId: experience.id,
+        selectedDate: selectedDate,
+        participants: selectedParticipants,
+      },
+    });
   };
 
   return (
