@@ -115,7 +115,7 @@ describe('UsersService', () => {
       const result = await service.getUserById('user-1');
 
       expect(result).toEqual(mockUser);
-      expect(result.preferences).toBeDefined();
+      expect(result?.preferences).toBeDefined();
     });
   });
 
@@ -373,7 +373,7 @@ describe('UsersService', () => {
       const result = await service.getUserByEmail('test@example.com');
 
       expect(result).toEqual(mockUser);
-      expect(result.email).toBe('test@example.com');
+      expect(result?.email).toBe('test@example.com');
     });
   });
 });

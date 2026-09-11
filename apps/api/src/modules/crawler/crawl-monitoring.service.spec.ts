@@ -133,7 +133,7 @@ describe('CrawlMonitoringService', () => {
       const result = await service.getAdapterState('test-adapter');
 
       expect(result).toEqual(mockState);
-      expect(result.isDisabled).toBe(false);
+      expect(result?.isDisabled).toBe(false);
     });
   });
 

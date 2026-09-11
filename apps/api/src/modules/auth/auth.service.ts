@@ -132,21 +132,14 @@ export class AuthService {
   }
 
   private generateTokens(userId: string, email: string): AuthToken {
-    const accessToken = this.jwtService.sign(
-      { sub: userId, email },
-      {
-        secret: process.env.JWT_SECRET,
-        expiresIn: process.env.JWT_EXPIRATION || '24h',
-      },
-    );
+    const payload = { sub: userId, email };
 
-    const refreshToken = this.jwtService.sign(
-      { sub: userId, email },
-      {
-        secret: process.env.JWT_REFRESH_SECRET || 'refresh-secret',
-        expiresIn: '7d',
-      },
-    );
+    const accessToken = this.jwtService.sign(payload);
+
+    const refreshToken = this.jwtService.sign(payload, {
+      secret: process.env.JWT_REFRESH_SECRET || 'refresh-secret',
+      expiresIn: '7d',
+    });
 
     return {
       accessToken,
