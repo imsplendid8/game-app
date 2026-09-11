@@ -1,18 +1,46 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuthStore } from '@/store/authStore';
+import { apiClient } from '@/lib/api';
 import { MainLayout } from '@/components/layouts/MainLayout';
 import { FiCalendar, FiBell, FiBookmark, FiTrendingUp } from 'react-icons/fi';
 
 export default function DashboardPage() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuthStore();
+  const [stats, setStats] = useState({
+    upcomingBookings: 3,
+    unreadNotifications: 2,
+    savedPrograms: 12,
+    trendingPrograms: 45,
+  });
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push('/login');
     }
   }, [isAuthenticated, isLoading, router]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const fetchDashboardData = async () => {
+      try {
+        const notifications = await apiClient.getNotifications();
+        const unreadCount = Array.isArray(notifications)
+          ? notifications.filter((n: { isRead?: boolean }) => !n.isRead).length
+          : 2;
+        setStats((prev) => ({
+          ...prev,
+          unreadNotifications: unreadCount,
+        }));
+      } catch (err) {
+        console.error('대시보드 데이터 로드 실패:', err);
+      }
+    };
+
+    fetchDashboardData();
+  }, [isAuthenticated]);
 
   if (isLoading || !isAuthenticated) {
     return (
@@ -38,37 +66,43 @@ export default function DashboardPage() {
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Upcoming Bookings */}
-          <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+          <button
+            onClick={() => router.push('/bookings')}
+            className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow text-left"
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 text-sm font-medium">예정된 예약</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">3</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">{stats.upcomingBookings}</p>
               </div>
               <div className="bg-blue-100 p-3 rounded-lg">
                 <FiCalendar className="text-blue-600" size={24} />
               </div>
             </div>
-          </div>
+          </button>
 
           {/* Notifications */}
-          <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+          <button
+            onClick={() => router.push('/notifications')}
+            className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow text-left"
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 text-sm font-medium">새 알림</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">5</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">{stats.unreadNotifications}</p>
               </div>
               <div className="bg-orange-100 p-3 rounded-lg">
                 <FiBell className="text-orange-600" size={24} />
               </div>
             </div>
-          </div>
+          </button>
 
           {/* Saved Programs */}
           <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 text-sm font-medium">저장된 프로그램</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">12</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">{stats.savedPrograms}</p>
               </div>
               <div className="bg-green-100 p-3 rounded-lg">
                 <FiBookmark className="text-green-600" size={24} />
@@ -81,7 +115,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 text-sm font-medium">인기 프로그램</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">45</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">{stats.trendingPrograms}</p>
               </div>
               <div className="bg-purple-100 p-3 rounded-lg">
                 <FiTrendingUp className="text-purple-600" size={24} />

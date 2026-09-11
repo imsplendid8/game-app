@@ -55,7 +55,11 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
             {/* User Menu */}
             <div className="flex items-center space-x-4">
-              <button className="relative p-2 text-gray-600 hover:text-gray-900">
+              <button
+                onClick={() => router.push('/notifications')}
+                className="relative p-2 text-gray-600 hover:text-gray-900 transition-colors"
+                title="알림"
+              >
                 <FiBell size={20} />
                 <span className="absolute top-1 right-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
                   3
