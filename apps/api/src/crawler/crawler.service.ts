@@ -1,18 +1,31 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { MockAdapter } from './adapters/mock.adapter';
+import { SeoulPublicServiceAdapter } from './adapters/seoul-public-service.adapter';
+import { MuseumAdapter } from './adapters/museum.adapter';
+import { ScienceCenterAdapter } from './adapters/science-center.adapter';
+import { FactoryTourAdapter } from './adapters/factory-tour.adapter';
+import { BroadcastingAdapter } from './adapters/broadcasting.adapter';
 import { CrawlResult, Adapter } from './adapter.interface';
 
-/**
- * Crawler Service - coordinates all adapters
- * In Phase 2, this will be expanded to handle real adapters and scheduling
- */
 @Injectable()
 export class CrawlerService {
   private readonly logger = new Logger(CrawlerService.name);
   private adapters: Map<string, Adapter> = new Map();
 
-  constructor(mockAdapter: MockAdapter) {
+  constructor(
+    mockAdapter: MockAdapter,
+    seoulAdapter: SeoulPublicServiceAdapter,
+    museumAdapter: MuseumAdapter,
+    scienceCenterAdapter: ScienceCenterAdapter,
+    factoryTourAdapter: FactoryTourAdapter,
+    broadcastingAdapter: BroadcastingAdapter,
+  ) {
     this.registerAdapter(mockAdapter);
+    this.registerAdapter(seoulAdapter);
+    this.registerAdapter(museumAdapter);
+    this.registerAdapter(scienceCenterAdapter);
+    this.registerAdapter(factoryTourAdapter);
+    this.registerAdapter(broadcastingAdapter);
   }
 
   registerAdapter(adapter: Adapter): void {
