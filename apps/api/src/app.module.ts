@@ -10,6 +10,7 @@ import { ChangeLogsModule } from '@/modules/change-logs/change-logs.module';
 import { BookingPatternsModule } from '@/modules/booking-patterns/booking-patterns.module';
 import { UsersModule } from '@/modules/users/users.module';
 import { NotificationsModule } from '@/modules/notifications/notifications.module';
+import { AuthModule } from '@/modules/auth/auth.module';
 import { CrawlerModule } from '@/crawler/crawler.module';
 
 @Module({
@@ -27,6 +28,7 @@ import { CrawlerModule } from '@/crawler/crawler.module';
     BookingPatternsModule,
     UsersModule,
     NotificationsModule,
+    AuthModule,
     CrawlerModule,
   ],
   controllers: [],

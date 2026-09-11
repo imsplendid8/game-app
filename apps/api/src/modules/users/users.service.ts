@@ -174,4 +174,8 @@ export class UsersService {
     user.isActive = true;
     return this.usersRepository.save(user);
   }
+
+  async updateUserPassword(userId: string, passwordHash: string): Promise<void> {
+    await this.usersRepository.update({ id: userId }, { passwordHash });
+  }
 }
