@@ -217,7 +217,10 @@ export default function BookingDetailPage() {
               </>
             )}
             {booking.status === 'completed' && (
-              <button className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+              <button
+                onClick={() => router.push(`/bookings/${booking.id}/review`)}
+                className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              >
                 리뷰 작성
               </button>
             )}
