@@ -1,0 +1,42 @@
+export type InstitutionType = 'PUBLIC' | 'MUSEUM' | 'SCIENCE_CENTER' | 'FACTORY' | 'BROADCASTING' | 'OTHER';
+
+export type ExperienceCategory =
+  | 'DOCENT'
+  | 'WORKSHOP'
+  | 'FACTORY_TOUR'
+  | 'EXHIBITION'
+  | 'PERFORMANCE'
+  | 'EDUCATIONAL'
+  | 'OUTDOOR'
+  | 'SPECIAL_EVENT'
+  | 'OTHER';
+
+export type BookingMethod = 'FIRST_COME' | 'LOTTERY' | 'ALWAYS_AVAILABLE';
+
+export type ExperienceRunStatus = 'UNKNOWN' | 'OPENING_SOON' | 'OPEN' | 'CLOSED' | 'CANCELLED';
+
+export type AutomationStatus = 'AVAILABLE' | 'CAPTCHA_REQUIRED' | 'QUEUE_REQUIRED' | 'MANUAL_REQUIRED';
+
+export type ChangeType =
+  | 'PROGRAM_CREATED'
+  | 'PROGRAM_UPDATED'
+  | 'STATUS_CHANGED'
+  | 'BOOKING_OPENED'
+  | 'BOOKING_CLOSED'
+  | 'BOOKING_TIME_REVEALED'
+  | 'CAPACITY_CHANGED'
+  | 'PRICE_CHANGED'
+  | 'CANCELLATION_OCCURRED'
+  | 'PROGRAM_CANCELLED';
+
+export type NotificationType =
+  | 'BOOKING_OPENED_TODAY'
+  | 'BOOKING_OPENED_TOMORROW'
+  | 'BOOKING_OPENING_SOON'
+  | 'NEW_PROGRAM_DISCOVERED'
+  | 'CANCELLATION_OCCURRED'
+  | 'PROGRAM_CANCELLED'
+  | 'PRICE_CHANGED'
+  | 'CAPACITY_CHANGED';
+
+export type NotificationPriority = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';

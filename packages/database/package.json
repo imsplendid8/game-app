@@ -1,0 +1,17 @@
+{
+  "name": "@withdkis/database",
+  "version": "0.1.0",
+  "description": "WithDKIS Database Layer",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "typeorm": "^0.3.17"
+  },
+  "devDependencies": {
+    "@types/node": "^20.8.0",
+    "typescript": "^5.2.2"
+  }
+}
