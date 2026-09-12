@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuthStore } from '@/store/authStore';
+import { useBookmarkStore } from '@/store/bookmarkStore';
 import { apiClient } from '@/lib/api';
 import { MainLayout } from '@/components/layouts/MainLayout';
 import { FiCalendar, FiBell, FiBookmark, FiTrendingUp } from 'react-icons/fi';
@@ -8,10 +9,11 @@ import { FiCalendar, FiBell, FiBookmark, FiTrendingUp } from 'react-icons/fi';
 export default function DashboardPage() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuthStore();
+  const { bookmarks, hydrate } = useBookmarkStore();
   const [stats, setStats] = useState({
     upcomingBookings: 3,
     unreadNotifications: 2,
-    savedPrograms: 12,
+    savedPrograms: 0,
     trendingPrograms: 45,
   });
 
@@ -26,6 +28,7 @@ export default function DashboardPage() {
 
     const fetchDashboardData = async () => {
       try {
+        hydrate();
         const notifications = await apiClient.getNotifications();
         const unreadCount = Array.isArray(notifications)
           ? notifications.filter((n: { isRead?: boolean }) => !n.isRead).length
@@ -33,6 +36,7 @@ export default function DashboardPage() {
         setStats((prev) => ({
           ...prev,
           unreadNotifications: unreadCount,
+          savedPrograms: bookmarks.length,
         }));
       } catch (err) {
         console.error('대시보드 데이터 로드 실패:', err);
@@ -40,7 +44,7 @@ export default function DashboardPage() {
     };
 
     fetchDashboardData();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, hydrate, bookmarks.length]);
 
   if (isLoading || !isAuthenticated) {
     return (
@@ -98,7 +102,10 @@ export default function DashboardPage() {
           </button>
 
           {/* Saved Programs */}
-          <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+          <button
+            onClick={() => router.push('/experiences/saved')}
+            className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow text-left"
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 text-sm font-medium">저장된 프로그램</p>
@@ -108,7 +115,7 @@ export default function DashboardPage() {
                 <FiBookmark className="text-green-600" size={24} />
               </div>
             </div>
-          </div>
+          </button>
 
           {/* Trending */}
           <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">

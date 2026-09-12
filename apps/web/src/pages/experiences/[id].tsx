@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuthStore } from '@/store/authStore';
+import { useBookmarkStore } from '@/store/bookmarkStore';
 import { MainLayout } from '@/components/layouts/MainLayout';
 import {
   FiArrowLeft,
@@ -17,16 +18,27 @@ import {
 export default function ExperienceDetailPage() {
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAuthStore();
+  const { addBookmark, removeBookmark, isBookmarked, hydrate } = useBookmarkStore();
   const { id } = router.query;
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedParticipants, setSelectedParticipants] = useState(1);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isBookmarkLoading, setIsBookmarkLoading] = useState(false);
+  const [bookmarked, setBookmarked] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push('/login');
     }
   }, [isAuthenticated, isLoading, router]);
+
+  useEffect(() => {
+    hydrate();
+    if (id) {
+      const experienceId = parseInt(id as string) || 1;
+      setBookmarked(isBookmarked(experienceId));
+    }
+  }, [id, hydrate, isBookmarked]);
 
   if (isLoading || !isAuthenticated) {
     return (
@@ -119,6 +131,28 @@ export default function ExperienceDetailPage() {
     });
   };
 
+  const handleBookmark = async () => {
+    setIsBookmarkLoading(true);
+    try {
+      if (bookmarked) {
+        removeBookmark(experience.id);
+      } else {
+        addBookmark({
+          id: experience.id,
+          name: experience.name,
+          institution: experience.institution,
+          price: experience.price,
+          ageGroup: experience.ageGroup,
+          rating: experience.rating,
+          bookmarkedAt: new Date().toISOString(),
+        });
+      }
+      setBookmarked(!bookmarked);
+    } finally {
+      setIsBookmarkLoading(false);
+    }
+  };
+
   return (
     <MainLayout>
       <div className="space-y-8">
@@ -180,8 +214,19 @@ export default function ExperienceDetailPage() {
                   <h1 className="text-3xl font-bold text-gray-900">{experience.name}</h1>
                   <p className="text-gray-600 mt-2">{experience.institution}</p>
                 </div>
-                <button className="p-3 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors">
-                  <FiBookmark size={24} className="text-gray-600" />
+                <button
+                  onClick={handleBookmark}
+                  disabled={isBookmarkLoading}
+                  className={`p-3 rounded-lg transition-colors ${
+                    bookmarked
+                      ? 'bg-blue-100 hover:bg-blue-200'
+                      : 'bg-gray-100 hover:bg-gray-200'
+                  }`}
+                >
+                  <FiBookmark
+                    size={24}
+                    className={bookmarked ? 'fill-blue-600 text-blue-600' : 'text-gray-600'}
+                  />
                 </button>
               </div>
 
