@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuthStore } from '@/store/authStore';
+import { useBookmarkStore } from '@/store/bookmarkStore';
 import { apiClient } from '@/lib/api';
 import { MainLayout } from '@/components/layouts/MainLayout';
 import { FiSearch, FiFilter, FiMapPin, FiDollarSign, FiUsers, FiBookmark } from 'react-icons/fi';
@@ -20,17 +21,26 @@ interface Experience {
 export default function ExperiencesPage() {
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAuthStore();
+  const { addBookmark, removeBookmark, isBookmarked, hydrate } = useBookmarkStore();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
+  const [selectedAgeGroup, setSelectedAgeGroup] = useState<string | null>(null);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 50000]);
+  const [minRating, setMinRating] = useState(0);
+  const [sortBy, setSortBy] = useState<'recent' | 'price-low' | 'price-high' | 'rating' | 'reviews'>('recent');
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push('/login');
     }
   }, [isAuthenticated, isLoading, router]);
+
+  useEffect(() => {
+    hydrate();
+  }, [hydrate]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -40,7 +50,7 @@ export default function ExperiencesPage() {
         setIsLoadingData(true);
         setError(null);
         const data = await apiClient.getExperiences();
-        setExperiences(Array.isArray(data) ? data : []);
+        setExperiences(Array.isArray(data) ? data : defaultExperiences);
       } catch (err) {
         console.error('경험 데이터 로드 실패:', err);
         setError('프로그램을 불러올 수 없습니다.');
@@ -130,12 +140,38 @@ export default function ExperiencesPage() {
     },
   ];
 
-  const filteredExperiences = experiences.filter((exp) => {
-    const matchesSearch = exp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      exp.institution.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = !selectedFilter || selectedFilter === '전체' || exp.ageGroup.includes(selectedFilter);
-    return matchesSearch && matchesFilter;
-  });
+  const filteredExperiences = experiences
+    .filter((exp) => {
+      const matchesSearch =
+        exp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        exp.institution.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        exp.location.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const matchesAgeGroup =
+        !selectedAgeGroup ||
+        selectedAgeGroup === '전체' ||
+        exp.ageGroup.includes(selectedAgeGroup);
+
+      const matchesPrice = exp.price >= priceRange[0] && exp.price <= priceRange[1];
+      const matchesRating = exp.rating >= minRating;
+
+      return matchesSearch && matchesAgeGroup && matchesPrice && matchesRating;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'price-low':
+          return a.price - b.price;
+        case 'price-high':
+          return b.price - a.price;
+        case 'rating':
+          return b.rating - a.rating;
+        case 'reviews':
+          return b.reviews - a.reviews;
+        case 'recent':
+        default:
+          return b.id - a.id;
+      }
+    });
 
   return (
     <MainLayout>
@@ -154,24 +190,90 @@ export default function ExperiencesPage() {
         </div>
 
         {/* Search and Filter Bar */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Search Input */}
-          <div className="md:col-span-2 relative">
-            <FiSearch className="absolute left-3 top-3 text-gray-400" size={20} />
-            <input
-              type="text"
-              placeholder="프로그램, 기관명 검색..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* Search Input */}
+            <div className="md:col-span-3 relative">
+              <FiSearch className="absolute left-3 top-3 text-gray-400" size={20} />
+              <input
+                type="text"
+                placeholder="프로그램, 기관명, 장소 검색..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            {/* Sort Dropdown */}
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+            >
+              <option value="recent">최신순</option>
+              <option value="price-low">가격 낮음</option>
+              <option value="price-high">가격 높음</option>
+              <option value="rating">평점 높음</option>
+              <option value="reviews">리뷰 많음</option>
+            </select>
           </div>
 
-          {/* Filter Button */}
-          <button className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-            <FiFilter size={20} />
-            필터
+          {/* Advanced Filters Toggle */}
+          <button
+            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+            className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium text-gray-700"
+          >
+            <FiFilter size={18} />
+            {showAdvancedFilters ? '필터 숨기기' : '고급 필터'}
           </button>
+
+          {/* Advanced Filters */}
+          {showAdvancedFilters && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 space-y-6">
+              {/* Price Range */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 mb-3">
+                  가격 범위: {priceRange[0].toLocaleString()}원 ~ {priceRange[1].toLocaleString()}원
+                </label>
+                <div className="space-y-2">
+                  <input
+                    type="range"
+                    min="0"
+                    max="50000"
+                    step="1000"
+                    value={priceRange[0]}
+                    onChange={(e) => setPriceRange([parseInt(e.target.value), priceRange[1]])}
+                    className="w-full"
+                  />
+                  <input
+                    type="range"
+                    min="0"
+                    max="50000"
+                    step="1000"
+                    value={priceRange[1]}
+                    onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+
+              {/* Minimum Rating */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 mb-3">
+                  최소 평점: {minRating.toFixed(1)} ⭐
+                </label>
+                <input
+                  type="range"
+                  min="0"
+                  max="5"
+                  step="0.5"
+                  value={minRating}
+                  onChange={(e) => setMinRating(parseFloat(e.target.value))}
+                  className="w-full"
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Age Group Filter */}
@@ -179,9 +281,9 @@ export default function ExperiencesPage() {
           {['전체', '4-6세', '6-10세', '10-14세', '14-18세'].map((age) => (
             <button
               key={age}
-              onClick={() => setSelectedFilter(selectedFilter === age ? null : age)}
+              onClick={() => setSelectedAgeGroup(selectedAgeGroup === age ? null : age)}
               className={`px-4 py-2 rounded-full font-medium transition-colors ${
-                selectedFilter === age
+                selectedAgeGroup === age
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
@@ -250,8 +352,32 @@ export default function ExperiencesPage() {
                   >
                     자세히 보기
                   </button>
-                  <button className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                    <FiBookmark size={20} />
+                  <button
+                    onClick={() => {
+                      if (isBookmarked(exp.id)) {
+                        removeBookmark(exp.id);
+                      } else {
+                        addBookmark({
+                          id: exp.id,
+                          name: exp.name,
+                          institution: exp.institution,
+                          price: exp.price,
+                          ageGroup: exp.ageGroup,
+                          rating: exp.rating,
+                          bookmarkedAt: new Date().toISOString(),
+                        });
+                      }
+                    }}
+                    className={`px-3 py-2 rounded-lg transition-colors ${
+                      isBookmarked(exp.id)
+                        ? 'bg-blue-100 text-blue-600'
+                        : 'border border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    <FiBookmark
+                      size={20}
+                      className={isBookmarked(exp.id) ? 'fill-blue-600' : ''}
+                    />
                   </button>
                 </div>
               </div>
