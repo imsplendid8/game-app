@@ -14,7 +14,7 @@ describe('bookmarkStore', () => {
   it('should add a bookmark', () => {
     const { result } = renderHook(() => useBookmarkStore())
     const mockExperience = {
-      id: 1,
+      id: 'exp-1',
       name: '과학관 과학 체험',
       institution: '국립과학관',
       price: 15000,
@@ -34,7 +34,7 @@ describe('bookmarkStore', () => {
   it('should not add duplicate bookmarks', () => {
     const { result } = renderHook(() => useBookmarkStore())
     const mockExperience = {
-      id: 1,
+      id: 'exp-1',
       name: '과학관 과학 체험',
       institution: '국립과학관',
       price: 15000,
@@ -54,7 +54,7 @@ describe('bookmarkStore', () => {
   it('should remove a bookmark', () => {
     const { result } = renderHook(() => useBookmarkStore())
     const mockExperience = {
-      id: 1,
+      id: 'exp-1',
       name: '과학관 과학 체험',
       institution: '국립과학관',
       price: 15000,
@@ -65,7 +65,7 @@ describe('bookmarkStore', () => {
 
     act(() => {
       result.current.addBookmark(mockExperience)
-      result.current.removeBookmark(1)
+      result.current.removeBookmark('exp-1')
     })
 
     expect(result.current.bookmarks).toHaveLength(0)
@@ -74,7 +74,7 @@ describe('bookmarkStore', () => {
   it('should check if experience is bookmarked', () => {
     const { result } = renderHook(() => useBookmarkStore())
     const mockExperience = {
-      id: 1,
+      id: 'exp-1',
       name: '과학관 과학 체험',
       institution: '국립과학관',
       price: 15000,
@@ -87,7 +87,7 @@ describe('bookmarkStore', () => {
       result.current.addBookmark(mockExperience)
     })
 
-    expect(result.current.isBookmarked(1)).toBe(true)
-    expect(result.current.isBookmarked(2)).toBe(false)
+    expect(result.current.isBookmarked('exp-1')).toBe(true)
+    expect(result.current.isBookmarked('exp-2')).toBe(false)
   })
 })

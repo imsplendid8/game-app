@@ -13,9 +13,9 @@ interface Experience {
     institutionName: string;
   };
   description?: string;
-  price?: number;
-  targetAgeMin?: number;
-  targetAgeMax?: number;
+  price?: number | string;
+  targetAgeMin?: number | string;
+  targetAgeMax?: number | string;
   bookingMethod: string;
   rating?: number;
   reviewCount?: number;
@@ -132,17 +132,17 @@ export default function ExperiencesPage() {
         id: exp.id,
         name: exp.programName,
         institution: exp.institution.institutionName,
-        price: exp.price || 0,
-        ageGroup: exp.targetAgeMin && exp.targetAgeMax ? `${exp.targetAgeMin}-${exp.targetAgeMax}` : '',
+        price: Number(exp.price) || 0,
+        ageGroup: exp.targetAgeMin && exp.targetAgeMax ? `${Number(exp.targetAgeMin)}-${Number(exp.targetAgeMax)}` : '',
         rating: ratings[exp.id] || 0,
         bookmarkedAt: new Date().toISOString(),
       });
     }
   };
 
-  const getAgeGroupLabel = (minAge?: number, maxAge?: number): string => {
+  const getAgeGroupLabel = (minAge?: number | string, maxAge?: number | string): string => {
     if (!minAge || !maxAge) return '';
-    return `${minAge}-${maxAge}세`;
+    return `${Number(minAge)}-${Number(maxAge)}세`;
   };
 
   return (

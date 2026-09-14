@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { useAuthStore } from '@/store/authStore';
 import { apiClient } from '@/lib/api';
 import { MainLayout } from '@/components/layouts/MainLayout';
-import { FiArrowLeft, FiCheck, FiAlertCircle } from 'react-icons/fi';
+import { FiArrowLeft, FiAlertCircle } from 'react-icons/fi';
 
 interface Experience {
   id: string;
@@ -15,7 +15,7 @@ interface Experience {
 
 export default function BookingCreatePage() {
   const router = useRouter();
-  const { user, isAuthenticated, isLoading } = useAuthStore();
+  const { isAuthenticated, isLoading } = useAuthStore();
   const { experienceId } = router.query;
 
   const [step, setStep] = useState<'details' | 'confirm' | 'success'>('details');

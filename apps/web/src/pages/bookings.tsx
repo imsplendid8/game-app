@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { useAuthStore } from '@/store/authStore';
 import { apiClient } from '@/lib/api';
 import { MainLayout } from '@/components/layouts/MainLayout';
-import { FiCalendar, FiClock, FiUsers, FiChevronRight, FiAlertCircle } from 'react-icons/fi';
+import { FiCalendar, FiUsers, FiChevronRight, FiAlertCircle } from 'react-icons/fi';
 
 interface Booking {
   id: string;

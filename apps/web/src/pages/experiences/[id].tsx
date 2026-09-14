@@ -17,10 +17,10 @@ interface Experience {
   id: string;
   programName: string;
   institution: { institutionName: string };
-  price?: number;
+  price?: number | string;
   description?: string;
-  targetAgeMin?: number;
-  targetAgeMax?: number;
+  targetAgeMin?: number | string;
+  targetAgeMax?: number | string;
 }
 
 export default function ExperienceDetailPage() {
@@ -50,12 +50,13 @@ export default function ExperienceDetailPage() {
       try {
         setIsLoadingData(true);
         setError(null);
-        const data = await apiClient.getExperienceById(id as string);
+        const experienceId = Array.isArray(id) ? id[0] : id;
+        const data = await apiClient.getExperienceById(experienceId);
         setExperience(data);
-        setBookmarked(isBookmarked(id));
+        setBookmarked(isBookmarked(experienceId));
 
         try {
-          const ratingData = await apiClient.getExperienceRating(id as string);
+          const ratingData = await apiClient.getExperienceRating(experienceId);
           setRating(ratingData.average || 0);
         } catch {
           setRating(0);
@@ -119,9 +120,9 @@ export default function ExperienceDetailPage() {
           id: experience.id,
           name: experience.programName,
           institution: experience.institution.institutionName,
-          price: experience.price || 0,
+          price: Number(experience.price) || 0,
           ageGroup: experience.targetAgeMin && experience.targetAgeMax
-            ? `${experience.targetAgeMin}-${experience.targetAgeMax}`
+            ? `${Number(experience.targetAgeMin)}-${Number(experience.targetAgeMax)}`
             : '',
           rating: rating,
           bookmarkedAt: new Date().toISOString(),

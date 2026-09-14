@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 export interface BookmarkedExperience {
-  id: number;
+  id: string;
   name: string;
   institution: string;
   price: number;
@@ -13,8 +13,8 @@ export interface BookmarkedExperience {
 export interface BookmarkState {
   bookmarks: BookmarkedExperience[];
   addBookmark: (experience: BookmarkedExperience) => void;
-  removeBookmark: (experienceId: number) => void;
-  isBookmarked: (experienceId: number) => boolean;
+  removeBookmark: (experienceId: string) => void;
+  isBookmarked: (experienceId: string) => boolean;
   hydrate: () => void;
 }
 
