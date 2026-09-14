@@ -110,8 +110,78 @@ class ApiClient {
     return response.data;
   }
 
+  async searchExperiences(params: Record<string, unknown>) {
+    const response = await this.client.get('/experiences/search', { params });
+    return response.data;
+  }
+
   async getExperienceById(id: string) {
     const response = await this.client.get(`/experiences/${id}`);
+    return response.data;
+  }
+
+  // Booking endpoints
+  async createBooking(data: {
+    experienceId: string;
+    selectedChildren: Array<{ id: string; name: string; age: number }>;
+    specialRequests?: string;
+    totalPrice?: number;
+  }) {
+    const response = await this.client.post('/bookings', data);
+    return response.data;
+  }
+
+  async getBookings() {
+    const response = await this.client.get('/bookings');
+    return response.data;
+  }
+
+  async getBookingById(id: string) {
+    const response = await this.client.get(`/bookings/${id}`);
+    return response.data;
+  }
+
+  async cancelBooking(id: string) {
+    const response = await this.client.delete(`/bookings/${id}`);
+    return response.data;
+  }
+
+  // Review endpoints
+  async createReview(data: {
+    bookingId: string;
+    rating: number;
+    reviewText: string;
+  }) {
+    const response = await this.client.post('/reviews', data);
+    return response.data;
+  }
+
+  async getReviewsByExperience(experienceId: string, limit = 10, offset = 0) {
+    const response = await this.client.get(`/reviews/experience/${experienceId}`, {
+      params: { limit, offset },
+    });
+    return response.data;
+  }
+
+  async getReviewByBooking(bookingId: string) {
+    const response = await this.client.get(`/reviews/booking/${bookingId}`);
+    return response.data;
+  }
+
+  async getUserReviews(limit = 20, offset = 0) {
+    const response = await this.client.get('/reviews/user/my-reviews', {
+      params: { limit, offset },
+    });
+    return response.data;
+  }
+
+  async markReviewAsHelpful(reviewId: string) {
+    const response = await this.client.put(`/reviews/${reviewId}/helpful`);
+    return response.data;
+  }
+
+  async getExperienceRating(experienceId: string) {
+    const response = await this.client.get(`/reviews/experience/${experienceId}/rating`);
     return response.data;
   }
 
