@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kids Experience Booking Tracker - 시스템 설계</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Inter:wght@400;500;600;700&display=swap">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #2E5090;
+      --secondary: #E67E22;
+      --accent: #27AE60;
+      --bg: #F8F9FA;
+      --surface: #FFFFFF;
+      --text: #2C3E50;
+      --text-muted: #7F8C8D;
+      --border: #ECF0F1;
+      --critical: #E74C3C;
+      --warning: #F39C12;
+      --success: #27AE60;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #1A1F2E;
+        --surface: #252D3D;
+        --text: #ECF0F1;
+        --text-muted: #BDC3C7;
+        --border: #34495E;
+      }
+    }
+
+    :root[data-theme="dark"] {
+      --bg: #1A1F2E;
+      --surface: #252D3D;
+      --text: #ECF0F1;
+      --text-muted: #BDC3C7;
+      --border: #34495E;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      font-size: 16px;
+    }
+
+    .container {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    aside {
+      width: 280px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 2rem 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .logo {
+      padding: 0 1.5rem 2rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 2rem;
+    }
+
+    .logo h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 24px;
+      color: var(--primary);
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .logo p {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+    }
+
+    nav ul {
+      list-style: none;
+    }
+
+    nav li {
+      margin: 0;
+    }
+
+    nav a {
+      display: block;
+      padding: 0.75rem 1.5rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 14px;
+      border-left: 3px solid transparent;
+      transition: all 0.2s;
+    }
+
+    nav a:hover {
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    nav a.active {
+      color: var(--secondary);
+      border-left-color: var(--secondary);
+      background: var(--bg);
+      font-weight: 500;
+    }
+
+    main {
+      flex: 1;
+      padding: 3rem;
+      max-width: 1000px;
+    }
+
+    section {
+      margin-bottom: 4rem;
+      scroll-margin-top: 2rem;
+    }
+
+    h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 32px;
+      color: var(--primary);
+      margin-bottom: 1.5rem;
+      text-wrap: balance;
+    }
+
+    h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      color: var(--text);
+      margin: 2rem 0 1rem;
+      text-wrap: balance;
+    }
+
+    h4 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      margin: 1.5rem 0 0.75rem;
+    }
+
+    p {
+      margin-bottom: 1rem;
+      max-width: 70ch;
+    }
+
+    .intro {
+      font-size: 18px;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-bottom: 2rem;
+      max-width: 70ch;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      border-radius: 8px;
+    }
+
+    .card-title {
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.35rem 0.75rem;
+      background: var(--bg);
+      color: var(--primary);
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+    }
+
+    .badge.critical {
+      background: var(--critical);
+      color: white;
+      border-color: var(--critical);
+    }
+
+    .badge.success {
+      background: var(--success);
+      color: white;
+      border-color: var(--success);
+    }
+
+    .badge.warning {
+      background: var(--warning);
+      color: white;
+      border-color: var(--warning);
+    }
+
+    ul, ol {
+      margin-left: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    li {
+      margin-bottom: 0.5rem;
+    }
+
+    code {
+      background: var(--bg);
+      padding: 0.2em 0.4em;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      color: var(--secondary);
+    }
+
+    pre {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 1rem 0;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+    }
+
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.75rem;
+      text-align: left;
+    }
+
+    th {
+      background: var(--bg);
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .highlight {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      background: var(--bg);
+      border-left: 4px solid var(--secondary);
+      margin: 1.5rem 0;
+      border-radius: 4px;
+    }
+
+    .icon {
+      font-size: 24px;
+    }
+
+    .phase-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin: 2rem 0;
+    }
+
+    .phase-card {
+      background: var(--surface);
+      border: 2px solid var(--border);
+      padding: 1.5rem;
+      border-radius: 8px;
+      border-left: 4px solid var(--secondary);
+    }
+
+    .phase-card h4 {
+      color: var(--primary);
+      margin-top: 0;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 3rem 0;
+    }
+
+    .theme-toggle {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 0.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 20px;
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+    }
+
+    .theme-toggle:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+
+      aside {
+        width: 100%;
+        height: auto;
+        position: relative;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        padding: 1.5rem;
+      }
+
+      main {
+        padding: 2rem 1.5rem;
+      }
+
+      nav {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-top: 1rem;
+      }
+
+      nav a {
+        padding: 0.5rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        border-left: none;
+      }
+
+      nav a.active {
+        border-left: none;
+        border-color: var(--secondary);
+      }
+
+      h2 {
+        font-size: 24px;
+      }
+
+      h3 {
+        font-size: 18px;
+      }
+
+      .phase-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <aside>
+      <div class="logo">
+        <h1>WithDKIS</h1>
+        <p>아이 체험 프로그램 추적 시스템</p>
+      </div>
+      <nav>
+        <ul>
+          <li><a href="#overview" class="nav-link active">개요</a></li>
+          <li><a href="#architecture" class="nav-link">아키텍처</a></li>
+          <li><a href="#components" class="nav-link">컴포넌트</a></li>
+          <li><a href="#database" class="nav-link">데이터베이스</a></li>
+          <li><a href="#design-decisions" class="nav-link">설계 결정</a></li>
+          <li><a href="#roadmap" class="nav-link">구현 로드맵</a></li>
+          <li><a href="#phases" class="nav-link">단계별 계획</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <main>
+      <!-- Overview -->
+      <section id="overview">
+        <h2>WithDKIS 시스템 설계</h2>
+        <p class="intro">
+          아이와 함께 참여할 수 있는 공공기관, 박물관, 과학관, 기업 공장견학 등의 저가·무료·희소 체험 프로그램을 발견하고, 선착순 접수 시작일을 놓치지 않도록 추적하는 개인용 예약 시스템입니다.
+        </p>
+
+        <div class="highlight">
+          <span class="icon">🎯</span>
+          <div>
+            <strong>핵심 원칙</strong><br>
+            사용자의 관심사는 "어디서 할 수 있는가"가 아니라 <strong>"언제 신청할 수 있는가"</strong>입니다.
+          </div>
+        </div>
+
+        <h3>이 시스템이 추적하는 것</h3>
+        <ul>
+          <li><strong>박물관 도슨트 프로그램</strong> - 저가 또는 무료</li>
+          <li><strong>공공기관 교육 프로그램</strong> - 선착순 모집</li>
+          <li><strong>기업 공장견학</strong> - 서울우유, 삼성 등</li>
+          <li><strong>과학관 실험 프로그램</strong> - 정기 및 특별 프로그램</li>
+          <li><strong>방송국/기업 견학</strong> - 제한된 정원</li>
+          <li><strong>공공 체험시설</strong> - 선착순 예약</li>
+          <li><strong>특정 기간 모집 프로그램</strong> - 방학 특별 프로그램</li>
+        </ul>
+
+        <h3>각 프로그램이 저장하는 정보</h3>
+        <div class="card">
+          <div class="card-title">📋 필수 데이터 필드</div>
+          <ul>
+            <li><strong>기관명</strong>, 프로그램명, 설명</li>
+            <li><strong>공식 URL</strong>, 실제 예약 URL</li>
+            <li><strong>체험일</strong>, 접수 시작/종료 날짜와 시간</li>
+            <li><strong>예약 방식</strong> - 선착순, 추첨, 상시</li>
+            <li><strong>정원/잔여석</strong>, 가격</li>
+            <li><strong>대상 연령/학년</strong>, 보호자 동반 여부</li>
+            <li><strong>프로그램 상태</strong> - UNKNOWN, OPENING_SOON, OPEN, CLOSED</li>
+            <li><strong>발견일/마지막 확인일</strong></li>
+          </ul>
+        </div>
+      </section>
+
+      <hr class="divider">
+
+      <!-- Architecture -->
+      <section id="architecture">
+        <h2>시스템 아키텍처</h2>
+
+        <h3>전체 구조</h3>
+        <pre>┌─────────────────────────────────────────────────────────┐
+│  Frontend (Next.js/React)                              │
+│  ├─ Dashboard (Timeline View)                          │
+│  ├─ Experience Details & Booking                       │
+│  └─ Settings (관심 기관, 연령대)                       │
+└────────────────────┬────────────────────────────────────┘
+                     │
+┌────────────────────▼────────────────────────────────────┐
+│  Backend API (Node.js/Nest.js)                          │
+│  ├─ Experience Management Service                      │
+│  ├─ Crawler/Watcher Service                            │
+│  └─ Pattern Analyzer Service                           │
+└────────────────────┬────────────────────────────────────┘
+                     │
+┌────────────────────▼────────────────────────────────────┐
+│  Data Layer (PostgreSQL + Redis)                        │
+│  ├─ experiences, experience_runs                       │
+│  ├─ booking_patterns, booking_predictions              │
+│  └─ change_logs, notifications                         │
+└────────────────────┬────────────────────────────────────┘
+                     │
+┌────────────────────▼────────────────────────────────────┐
+│  External Data Sources (Crawlers/Adapters)             │
+│  ├─ Seoul Public Service Sites                         │
+│  ├─ Museum Sites                                       │
+│  └─ Science Centers, Factory Tours, etc.               │
+└─────────────────────────────────────────────────────────┘</pre>
+
+        <h3>데이터 흐름</h3>
+
+        <div class="card">
+          <div class="card-title">🔄 프로그램 발견 흐름</div>
+          <pre>External Site
+    ↓
+Adapter.fetchPrograms()
+    ↓
+Change Detection
+    ├─ NEW_PROGRAM? → Create + HIGH Priority Notification
+    ├─ STATUS_CHANGED? → Log Change
+    └─ OTHER_UPDATES? → Log Change + Notification
+    ↓
+Database Update
+    ↓
+Dashboard Refresh (Real-time or Polling)</pre>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📈 패턴 학습 흐름</div>
+          <pre>New Program Added
+    ↓
+Look for same institution's past programs
+    ↓
+Analyze booking patterns
+    ├─ Monthly 3rd Monday 10:00? (2+ instances)
+    ├─ Monthly 1st day 9:00?
+    └─ Experience date relative (-14 days)?
+    ↓
+Generate prediction
+    ├─ confidence >= 0.80 → Display as "estimated"
+    └─ confidence < 0.80 → Mark as "uncertain"</pre>
+        </div>
+      </section>
+
+      <hr class="divider">
+
+      <!-- Components -->
+      <section id="components">
+        <h2>핵심 컴포넌트</h2>
+
+        <div class="card">
+          <div class="card-title">1️⃣ Experience Management Service</div>
+          <p>체험 프로그램 CRUD 및 상태 관리</p>
+          <ul>
+            <li><code>createExperience()</code> - 신규 프로그램 등록</li>
+            <li><code>updateExperience()</code> - 프로그램 정보 업데이트</li>
+            <li><code>updateRunStatus()</code> - 특정 접수 회차 상태 변경</li>
+            <li><code>getExperiencesByDeadline()</code> - 시간 기반 필터링</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="card-title">2️⃣ Crawler / Watcher Service</div>
+          <p>정기적으로 외부 사이트 확인 및 변화 감지</p>
+          <p><strong>감지 항목</strong>:</p>
+          <ul>
+            <li>신규 체험 프로그램 생성</li>
+            <li>접수 상태 변경 (OPENING_SOON → OPEN → CLOSED)</li>
+            <li>접수 시간 공개</li>
+            <li>정원/잔여석 변화</li>
+            <li>가격 변화</li>
+            <li>취소표 발생, 프로그램 취소</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="card-title">3️⃣ Pattern Analyzer Service</div>
+          <p>과거 프로그램 패턴 분석 및 다음 접수일 예측</p>
+          <p><strong>분석 대상</strong>:</p>
+          <ul>
+            <li>반복 주기 (매월, 매주, 특정 요일)</li>
+            <li>접수 시간 (월요일 10시, 1일 9시 등)</li>
+            <li>체험일 기준 상대 시간 (체험 14일 전 등)</li>
+            <li>계절성 (방학, 특정 시즌)</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="card-title">4️⃣ Adapter Framework</div>
+          <p>사이트별 크롤러 (Playwright 확장 가능)</p>
+          <pre>adapters/
+├── seoul-public-service/
+├── museum/
+│   ├── national-museum.ts
+│   └── seoul-museum.ts
+├── science-center/
+└── factory-tour/
+    ├── seoul-milk.ts
+    └── samsung-factory.ts</pre>
+        </div>
+
+        <div class="card">
+          <div class="card-title">5️⃣ Change Detection Engine</div>
+          <p>프로그램 변화 감지 및 로깅</p>
+          <p><strong>변화 유형</strong>:</p>
+          <ul>
+            <li>PROGRAM_CREATED / PROGRAM_UPDATED</li>
+            <li>STATUS_CHANGED / BOOKING_OPENED</li>
+            <li>BOOKING_TIME_REVEALED</li>
+            <li>CAPACITY_CHANGED / PRICE_CHANGED</li>
+            <li>CANCELLATION_OCCURRED / PROGRAM_CANCELLED</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="card-title">6️⃣ Notification Service</div>
+          <p>사용자에게 중요한 이벤트 알림</p>
+          <p><strong>우선순위 이벤트</strong>:</p>
+          <ol>
+            <li><span class="badge critical">CRITICAL</span> 오늘 신청 시작</li>
+            <li><span class="badge critical">HIGH</span> 내일 신청 시작, 7일 이내 신청, 취소표 발생</li>
+            <li><span class="badge warning">MEDIUM</span> 신규 프로그램, 가격/정원 변화</li>
+            <li><span class="badge">LOW</span> 기타 업데이트</li>
+          </ol>
+        </div>
+      </section>
+
+      <hr class="divider">
+
+      <!-- Database -->
+      <section id="database">
+        <h2>데이터베이스 스키마</h2>
+
+        <h3>핵심 테이블 (13개)</h3>
+
+        <div class="card">
+          <div class="card-title">📦 Core Tables</div>
+          <ul>
+            <li><code>institutions</code> - 기관 정보</li>
+            <li><code>experiences</code> - 체험 프로그램 (반복 프로그램의 틀)</li>
+            <li><code>experience_runs</code> - 체험 회차 (각 회차의 구체적 정보)</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🔍 Tracking Tables</div>
+          <ul>
+            <li><code>change_logs</code> - 모든 변화 추적</li>
+            <li><code>crawl_history</code> - 크롤링 이력</li>
+            <li><code>adapter_state</code> - Adapter 상태</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📊 Analysis Tables</div>
+          <ul>
+            <li><code>booking_patterns</code> - 학습된 패턴 (반복 주기, 시간 등)</li>
+            <li><code>pattern_evidence</code> - 패턴 증거</li>
+            <li><code>booking_predictions</code> - 다음 접수일 예측</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="card-title">👤 User Tables</div>
+          <ul>
+            <li><code>users</code> - 사용자</li>
+            <li><code>user_preferences</code> - 사용자 선호도</li>
+            <li><code>user_bookmarks</code> - 위시리스트/북마크</li>
+            <li><code>notifications</code> - 알림</li>
+          </ul>
+        </div>
+
+        <h3>Experience와 ExperienceRun 분리의 이유</h3>
+        <div class="highlight">
+          <span class="icon">💡</span>
+          <div>
+            <strong>정기 프로그램의 여러 회차 관리</strong><br>
+            "국립박물관 도슨트 프로그램"은 매달 여러 회차가 있으며, 각 회차마다 접수 시간이 다를 수 있습니다. Experience는 프로그램의 틀, ExperienceRun은 각 회차입니다.
+          </div>
+        </div>
+      </section>
+
+      <hr class="divider">
+
+      <!-- Design Decisions -->
+      <section id="design-decisions">
+        <h2>핵심 설계 결정</h2>
+
+        <div class="card">
+          <div class="card-title">1️⃣ 데이터 모델링</div>
+          <p><strong>❌ 기존 방식:</strong> "장소" 중심 (박물관, 과학관 검색)</p>
+          <p><strong>✅ WithDKIS:</strong> "모집 프로그램" 중심 (접수 시간, 패턴, 예측)</p>
+          <p>사용자가 원하는 것은 "어디서 할 수 있나"가 아니라 "언제 신청할 수 있나"입니다.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-title">2️⃣ Booking 상태 머신</div>
+          <pre>UNKNOWN
+    ↓ (booking_open_at 공개됨)
+OPENING_SOON
+    ↓ (현재시각 >= booking_open_at)
+OPEN
+    ↓ (현재시각 >= booking_close_at OR 정원 찬 경우)
+CLOSED</pre>
+        </div>
+
+        <div class="card">
+          <div class="card-title">3️⃣ 메인 화면: 시간 기반 우선순위</div>
+          <ol>
+            <li>🔴 <strong>오늘 신청</strong> (ACTION_REQUIRED_TODAY)</li>
+            <li>🟠 <strong>내일 신청</strong> (ACTION_REQUIRED_TOMORROW)</li>
+            <li>🟡 <strong>7일 이내</strong> (COMING_SOON_7DAYS)</li>
+            <li>🟢 <strong>지금 신청 가능</strong> (CURRENTLY_AVAILABLE)</li>
+            <li>💰 <strong>무료</strong> (FREE_PROGRAMS)</li>
+            <li>💵 <strong>1만원 이하</strong> (BUDGET_FRIENDLY)</li>
+            <li>⚡ <strong>선착순</strong> (FIRST_COME)</li>
+            <li>👧 <strong>아이 연령 맞춤</strong> (AGE_MATCHED)</li>
+          </ol>
+        </div>
+
+        <div class="card">
+          <div class="card-title">4️⃣ 패턴 학습 전략</div>
+          <p><strong>신뢰도 점수 계산</strong>:</p>
+          <ul>
+            <li>1개 회차: 0.3 신뢰도</li>
+            <li>2개 회차: 0.6 신뢰도</li>
+            <li>3개 회차: 0.8 신뢰도</li>
+            <li>5개+ 회차: 0.95+ 신뢰도</li>
+          </ul>
+          <p>패턴이 반복되면 자동으로 다음 예상 접수 시간을 계산합니다.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-title">5️⃣ 자동화 안전성</div>
+          <div style="font-size: 14px;">
+            <p><strong>automation_status</strong> 필드로 각 프로그램의 자동화 가능 여부 표시:</p>
+            <ul>
+              <li><span class="badge success">AVAILABLE</span> 자동 신청 가능</li>
+              <li><span class="badge warning">CAPTCHA_REQUIRED</span> CAPTCHA로 자동화 불가</li>
+              <li><span class="badge">QUEUE_REQUIRED</span> 대기열 우회 불가</li>
+              <li><span class="badge critical">MANUAL_REQUIRED</span> 기타 이유로 수동 필요</li>
+            </ul>
+            <p>TOS 준수: robots.txt 준수, rate limiting, CAPTCHA/대기열 우회 금지</p>
+          </div>
+        </div>
+      </section>
+
+      <hr class="divider">
+
+      <!-- Roadmap Overview -->
+      <section id="roadmap">
+        <h2>구현 로드맵 개요</h2>
+        <p class="intro">8-12주 동안 6개 Phase를 거쳐 단계적으로 구현합니다.</p>
+
+        <div class="highlight">
+          <span class="icon">📅</span>
+          <div>
+            <strong>총 기간: 8-12주</strong><br>
+            각 Phase는 구체적인 Tasks, 테스트 전략, Success Criteria를 포함합니다.
+          </div>
+        </div>
+      </section>
+
+      <!-- Phases -->
+      <section id="phases">
+        <h2>단계별 구현 계획</h2>
+
+        <div class="phase-grid">
+          <div class="phase-card">
+            <h4>Phase 1: 기초 인프라</h4>
+            <p><strong>기간:</strong> 주 1-2</p>
+            <p><strong>목표:</strong> 기본 API 및 웹사이트 구축</p>
+            <ul style="font-size: 14px;">
+              <li>프로젝트 구조 생성</li>
+              <li>PostgreSQL 스키마 구현</li>
+              <li>REST API 기본 endpoints</li>
+              <li>프론트엔드 기본 화면</li>
+            </ul>
+            <p><strong>산출물:</strong> 수동으로 입력한 프로그램을 웹에서 조회 가능</p>
+          </div>
+
+          <div class="phase-card">
+            <h4>Phase 2: 크롤러 구축</h4>
+            <p><strong>기간:</strong> 주 3-4</p>
+            <p><strong>목표:</strong> 자동 데이터 수집 및 변화 감지</p>
+            <ul style="font-size: 14px;">
+              <li>Crawler 기본 구조</li>
+              <li>Change detection 엔진</li>
+              <li>First adapter (실제 사이트)</li>
+              <li>Crawl history 추적</li>
+            </ul>
+            <p><strong>산출물:</strong> 웹사이트에서 프로그램 자동 수집 및 변화 감지</p>
+          </div>
+
+          <div class="phase-card">
+            <h4>Phase 3: 패턴 분석</h4>
+            <p><strong>기간:</strong> 주 5-6</p>
+            <p><strong>목표:</strong> 접수 시간 예측</p>
+            <ul style="font-size: 14px;">
+              <li>Pattern analyzer service</li>
+              <li>과거 데이터 분석</li>
+              <li>예측 엔진</li>
+              <li>정확도 추적</li>
+            </ul>
+            <p><strong>산출물:</strong> 80% 이상 신뢰도로 접수 시간 예측</p>
+          </div>
+
+          <div class="phase-card">
+            <h4>Phase 4: 스마트 알림</h4>
+            <p><strong>기간:</strong> 주 7-8</p>
+            <p><strong>목표:</strong> 사용자 알림 및 대시보드</p>
+            <ul style="font-size: 14px;">
+              <li>사용자 관리 (인증)</li>
+              <li>Notification service</li>
+              <li>Email/Push 알림</li>
+              <li>타임라인 대시보드</li>
+            </ul>
+            <p><strong>산출물:</strong> 사용자가 중요한 신청 시간을 놓치지 않음</p>
+          </div>
+
+          <div class="phase-card">
+            <h4>Phase 5: 고급 크롤러</h4>
+            <p><strong>기간:</strong> 주 9-10</p>
+            <p><strong>목표:</strong> 데이터 커버리지 확대</p>
+            <ul style="font-size: 14px;">
+              <li>2-3개 추가 adapter</li>
+              <li>검색/필터링 개선</li>
+              <li>Analytics 및 리포팅</li>
+              <li>사용자 피드백 반영</li>
+            </ul>
+            <p><strong>산출물:</strong> 5개+ 기관, 100개+ 프로그램 데이터</p>
+          </div>
+
+          <div class="phase-card">
+            <h4>Phase 6: 자동화 기초</h4>
+            <p><strong>기간:</strong> 주 11-12</p>
+            <p><strong>목표:</strong> Playwright 구조 설계</p>
+            <ul style="font-size: 14px;">
+              <li>자동화 가능성 분석</li>
+              <li>Playwright 구조 설계</li>
+              <li>안전성 및 이용약관</li>
+              <li>테스트 구조</li>
+            </ul>
+            <p><strong>산출물:</strong> Phase 7에서 실제 자동화 가능한 구조</p>
+          </div>
+        </div>
+
+        <hr style="margin: 2rem 0;">
+
+        <div class="card">
+          <div class="card-title">Phase 7+: 완전 자동화 (미래)</div>
+          <ul>
+            <li>자동화 허용 사이트부터 실제 예약 구현</li>
+            <li>사용자별 예약 우선순위 설정</li>
+            <li>실패 시도 재시도 로직</li>
+            <li>모니터링 및 로깅</li>
+            <li>규정 준수 감시 (이용약관 등)</li>
+          </ul>
+        </div>
+      </section>
+
+      <hr class="divider">
+
+      <!-- Tech Stack -->
+      <section>
+        <h2>기술 스택</h2>
+
+        <div class="card">
+          <div class="card-title">🖥️ Backend</div>
+          <ul>
+            <li><strong>Runtime:</strong> Node.js v18+</li>
+            <li><strong>Framework:</strong> Nest.js (모듈성, 테스트 가능성)</li>
+            <li><strong>ORM:</strong> TypeORM or Prisma</li>
+            <li><strong>Database:</strong> PostgreSQL</li>
+            <li><strong>Job Queue:</strong> Bull (스케줄된 크롤러)</li>
+            <li><strong>Caching:</strong> Redis (크롤러 상태, 패턴 캐시)</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🎨 Frontend</div>
+          <ul>
+            <li><strong>Framework:</strong> Next.js 14+</li>
+            <li><strong>UI:</strong> React 18+, Tailwind CSS</li>
+            <li><strong>State:</strong> TanStack Query (데이터 페칭)</li>
+            <li><strong>Date:</strong> Day.js or date-fns</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🕷️ Crawler</div>
+          <ul>
+            <li><strong>Static HTML:</strong> Cheerio</li>
+            <li><strong>JavaScript-heavy:</strong> Playwright (미래)</li>
+            <li><strong>Headless Browser:</strong> Puppeteer (대체)</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🚀 Infrastructure</div>
+          <ul>
+            <li><strong>Containerization:</strong> Docker</li>
+            <li><strong>CI/CD:</strong> GitHub Actions</li>
+            <li><strong>Hosting:</strong> Vercel (Frontend), Railway/Heroku (Backend)</li>
+          </ul>
+        </div>
+      </section>
+
+      <hr class="divider">
+
+      <!-- Success Metrics -->
+      <section>
+        <h2>성공 지표</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Phase</th>
+              <th>Success Criteria</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Phase 1</strong></td>
+              <td>수동 입력한 3-5개 프로그램을 웹에서 조회 가능<br>Database schema 완전 구현</td>
+            </tr>
+            <tr>
+              <td><strong>Phase 2</strong></td>
+              <td>한 사이트에서 프로그램 자동 수집 성공<br>변화 감지 정확률 > 95%</td>
+            </tr>
+            <tr>
+              <td><strong>Phase 3</strong></td>
+              <td>80%+ 확신도로 접수 시간 예측 가능<br>예측 정확률 > 70%</td>
+            </tr>
+            <tr>
+              <td><strong>Phase 4</strong></td>
+              <td>사용자가 임박한 접수 시간을 놓치지 않음<br>알림 오픈율 > 50%</td>
+            </tr>
+            <tr>
+              <td><strong>Phase 5</strong></td>
+              <td>5개 이상 기관의 프로그램 수집<br>총 100개+ 프로그램 데이터베이스</td>
+            </tr>
+            <tr>
+              <td><strong>Phase 6</strong></td>
+              <td>자동화 구조 설계 완료<br>자동화 가능/불가 구분 로직 완성</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <hr class="divider">
+
+      <!-- Next Steps -->
+      <section>
+        <h2>지금 바로 시작하기</h2>
+
+        <div class="highlight">
+          <span class="icon">🚀</span>
+          <div>
+            <strong>Phase 1 체크리스트</strong>
+            <ol style="margin: 0.5rem 0; padding-left: 1.5rem;">
+              <li>Node.js 프로젝트 구조 생성</li>
+              <li>Docker 컨테이너 (PostgreSQL, Redis) 구성</li>
+              <li>데이터베이스 마이그레이션 도구 설정</li>
+              <li>기본 API endpoints 구현</li>
+              <li>프론트엔드 리스트 페이지 구축</li>
+              <li>샘플 데이터 2-3개 입력 후 웹에서 확인</li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">🌙</button>
+
+  <script>
+    const toggle = document.getElementById('themeToggle');
+    const links = document.querySelectorAll('.nav-link');
+
+    // Theme toggle
+    toggle.addEventListener('click', () => {
+      const html = document.documentElement;
+      const currentTheme = html.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      updateThemeIcon(newTheme);
+    });
+
+    function updateThemeIcon(theme) {
+      toggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+    }
+
+    // Load saved theme
+    const saved = localStorage.getItem('theme');
+    if (saved) {
+      document.documentElement.setAttribute('data-theme', saved);
+      updateThemeIcon(saved);
+    }
+
+    // Navigation active state
+    links.forEach(link => {
+      link.addEventListener('click', () => {
+        links.forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+      });
+
+      // Update active on scroll
+      const href = link.getAttribute('href').slice(1);
+      window.addEventListener('scroll', () => {
+        const section = document.getElementById(href);
+        if (section) {
+          const rect = section.getBoundingClientRect();
+          if (rect.top >= 0 && rect.top <= window.innerHeight / 2) {
+            links.forEach(l => l.classList.remove('active'));
+            link.classList.add('active');
+          }
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: withdkis-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: withdkis_dev
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: withdkis-redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis_dev_password}
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', '--raw', 'incr', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_dev_password}
+
+  adminer:
+    image: adminer
+    container_name: withdkis-adminer
+    ports:
+      - '8080:8080'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: withdkis-api
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/withdkis_dev
+      REDIS_URL: redis://:redis_dev_password@redis:6379
+      JWT_SECRET: ${JWT_SECRET:-dev_secret_key_do_not_use_in_production}
+      JWT_EXPIRATION: 24h
+      PORT: 3001
+    ports:
+      - '3001:3001'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./apps/api/src:/app/apps/api/src
+    command: npm run dev --workspace=apps/api
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: withdkis-web
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      NEXT_PUBLIC_API_URL: http://api:3001
+    ports:
+      - '3000:3000'
+    depends_on:
+      - api
+    volumes:
+      - ./apps/web/src:/app/apps/web/src
+    command: npm run dev --workspace=apps/web
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  default:
+    name: withdkis-network
