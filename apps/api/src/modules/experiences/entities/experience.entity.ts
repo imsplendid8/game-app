@@ -5,10 +5,12 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
+  OneToMany,
   JoinColumn,
   Index,
 } from 'typeorm';
 import { Institution } from '../../institutions/entities/institution.entity';
+import { Review } from '../../reviews/entities/review.entity';
 
 @Entity('experiences')
 @Index(['institutionId'])
@@ -99,4 +101,7 @@ export class Experience {
 
   @Column({ type: 'varchar', length: 100, nullable: true })
   externalSource: string;
+
+  @OneToMany(() => Review, (review) => review.experience, { cascade: true })
+  reviews: Review[];
 }

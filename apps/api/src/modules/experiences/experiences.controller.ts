@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Put, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { ExperiencesService } from './experiences.service';
 import { CreateExperienceDto } from './dto/create-experience.dto';
@@ -12,6 +12,30 @@ export class ExperiencesController {
   @ApiOperation({ summary: 'Create a new experience program' })
   async create(@Body() createExperienceDto: CreateExperienceDto) {
     return await this.experiencesService.create(createExperienceDto);
+  }
+
+  @Get('search')
+  @ApiOperation({ summary: 'Search and filter experiences' })
+  async search(
+    @Query('search') search?: string,
+    @Query('ageGroup') ageGroup?: string,
+    @Query('priceMin') priceMin?: number,
+    @Query('priceMax') priceMax?: number,
+    @Query('category') category?: string,
+    @Query('sort') sort?: 'recent' | 'price-low' | 'price-high' | 'name',
+    @Query('limit') limit = 10,
+    @Query('offset') offset = 0,
+  ) {
+    return await this.experiencesService.search({
+      search,
+      ageGroup,
+      priceMin,
+      priceMax,
+      category,
+      sort,
+      limit,
+      offset,
+    });
   }
 
   @Get()

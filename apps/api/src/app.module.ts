@@ -9,6 +9,8 @@ import { ExperiencesModule } from '@/modules/experiences/experiences.module';
 import { ExperienceRunsModule } from '@/modules/experience-runs/experience-runs.module';
 import { ChangeLogsModule } from '@/modules/change-logs/change-logs.module';
 import { BookingPatternsModule } from '@/modules/booking-patterns/booking-patterns.module';
+import { BookingsModule } from '@/modules/bookings/bookings.module';
+import { ReviewsModule } from '@/modules/reviews/reviews.module';
 import { UsersModule } from '@/modules/users/users.module';
 import { NotificationsModule } from '@/modules/notifications/notifications.module';
 import { AuthModule } from '@/modules/auth/auth.module';
@@ -37,6 +39,8 @@ import { JobsModule } from '@/modules/jobs/jobs.module';
     ExperienceRunsModule,
     ChangeLogsModule,
     BookingPatternsModule,
+    BookingsModule,
+    ReviewsModule,
     UsersModule,
     NotificationsModule,
     AuthModule,
