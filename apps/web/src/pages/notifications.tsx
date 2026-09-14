@@ -37,59 +37,21 @@ export default function NotificationsPage() {
       try {
         setIsLoadingData(true);
         setError(null);
-        const mockNotifications: Notification[] = [
-          {
-            id: '1',
-            title: '예약 확인',
-            message: '과학관 과학 체험 예약이 확정되었습니다. 2024년 9월 16일 오후 2시',
-            type: 'booking',
-            isRead: false,
-            createdAt: '2024-09-10T10:30:00Z',
-            actionUrl: '/bookings/1',
-            actionLabel: '예약 확인',
-          },
-          {
-            id: '2',
-            title: '미리알림',
-            message: '내일 미술관 아동 미술 교실이 예정되어 있습니다.',
-            type: 'reminder',
-            isRead: false,
-            createdAt: '2024-09-09T15:00:00Z',
-            actionUrl: '/bookings/2',
-            actionLabel: '세부정보',
-          },
-          {
-            id: '3',
-            title: '신규 프로그램',
-            message: '관심 분야에서 새로운 프로그램이 등록되었습니다: 로봇 공학 입문',
-            type: 'program',
-            isRead: false,
-            createdAt: '2024-09-08T14:20:00Z',
-            actionUrl: '/experiences/7',
-            actionLabel: '보기',
-          },
-          {
-            id: '4',
-            title: '리뷰 작성',
-            message: '완료된 프로그램에 대한 리뷰를 남겨주세요.',
-            type: 'review',
-            isRead: true,
-            createdAt: '2024-09-07T11:45:00Z',
-            actionUrl: '/bookings/4',
-            actionLabel: '리뷰 작성',
-          },
-          {
-            id: '5',
-            title: '예약 변경',
-            message: '팩토리 투어 예약 시간이 변경되었습니다.',
-            type: 'booking',
-            isRead: true,
-            createdAt: '2024-09-05T09:15:00Z',
-            actionUrl: '/bookings/3',
-            actionLabel: '예약 확인',
-          },
-        ];
-        setNotifications(mockNotifications);
+        const data = await apiClient.getNotifications();
+        const notificationsList = Array.isArray(data) ? data : data.data || [];
+
+        const mappedNotifications = notificationsList.map((notif: any) => ({
+          id: notif.id,
+          title: notif.title || '알림',
+          message: notif.message || '',
+          type: notif.type || 'booking' as 'booking' | 'reminder' | 'program' | 'review',
+          isRead: notif.isRead || false,
+          createdAt: notif.createdAt || new Date().toISOString(),
+          actionUrl: notif.actionUrl,
+          actionLabel: notif.actionLabel,
+        }));
+
+        setNotifications(mappedNotifications);
       } catch (err) {
         console.error('알림 로드 실패:', err);
         setError('알림을 불러올 수 없습니다.');
