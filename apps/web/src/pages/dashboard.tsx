@@ -10,12 +10,14 @@ export default function DashboardPage() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuthStore();
   const { bookmarks, hydrate } = useBookmarkStore();
+  const [bookings, setBookings] = useState<any[]>([]);
   const [stats, setStats] = useState({
-    upcomingBookings: 3,
-    unreadNotifications: 2,
+    upcomingBookings: 0,
+    unreadNotifications: 0,
     savedPrograms: 0,
-    trendingPrograms: 45,
+    trendingPrograms: 0,
   });
+  const [isLoadingData, setIsLoadingData] = useState(true);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -28,18 +30,34 @@ export default function DashboardPage() {
 
     const fetchDashboardData = async () => {
       try {
+        setIsLoadingData(true);
         hydrate();
+
+        // Fetch bookings
+        const bookingsData = await apiClient.getBookings();
+        const bookingsList = Array.isArray(bookingsData) ? bookingsData : bookingsData.data || [];
+        setBookings(bookingsList.slice(0, 3)); // Show first 3 bookings
+
+        // Fetch notifications
         const notifications = await apiClient.getNotifications();
         const unreadCount = Array.isArray(notifications)
           ? notifications.filter((n: { isRead?: boolean }) => !n.isRead).length
-          : 2;
-        setStats((prev) => ({
-          ...prev,
+          : 0;
+
+        setStats({
+          upcomingBookings: bookingsList.filter((b: any) => b.status === 'PENDING' || b.status === 'CONFIRMED').length,
           unreadNotifications: unreadCount,
           savedPrograms: bookmarks.length,
-        }));
+          trendingPrograms: 0,
+        });
       } catch (err) {
         console.error('대시보드 데이터 로드 실패:', err);
+        setStats((prev) => ({
+          ...prev,
+          savedPrograms: bookmarks.length,
+        }));
+      } finally {
+        setIsLoadingData(false);
       }
     };
 
@@ -135,34 +153,79 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Upcoming Bookings Section */}
           <div className="lg:col-span-2 bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">예정된 예약</h2>
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-semibold text-gray-900">프로그램 이름 #{i}</h3>
-                    <span className="px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded">예약완료</span>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-2">📅 2024년 9월 {15 + i}일 오후 2시</p>
-                  <p className="text-sm text-gray-600">📍 서울시 강남구</p>
-                </div>
-              ))}
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-bold text-gray-900">예정된 예약</h2>
+              {bookings.length > 0 && (
+                <button
+                  onClick={() => router.push('/bookings')}
+                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  모두 보기
+                </button>
+              )}
             </div>
+            {isLoadingData ? (
+              <div className="text-center py-8 text-gray-600">로딩 중...</div>
+            ) : bookings.length > 0 ? (
+              <div className="space-y-4">
+                {bookings.map((booking) => {
+                  const statusMap: Record<string, { bg: string; text: string; label: string }> = {
+                    PENDING: { bg: 'bg-yellow-100', text: 'text-yellow-800', label: '대기 중' },
+                    CONFIRMED: { bg: 'bg-green-100', text: 'text-green-800', label: '확인됨' },
+                    COMPLETED: { bg: 'bg-blue-100', text: 'text-blue-800', label: '완료' },
+                    CANCELLED: { bg: 'bg-red-100', text: 'text-red-800', label: '취소' },
+                  };
+                  const status = statusMap[booking.status] || statusMap.PENDING;
+                  return (
+                    <div
+                      key={booking.id}
+                      onClick={() => router.push(`/bookings/${booking.id}`)}
+                      className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow transition-all cursor-pointer"
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="font-semibold text-gray-900">
+                          {booking.experience?.programName || '프로그램'}
+                        </h3>
+                        <span className={`px-2 py-1 text-xs font-semibold rounded ${status.bg} ${status.text}`}>
+                          {status.label}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-2">
+                        📅 {new Date(booking.createdAt).toLocaleDateString('ko-KR')}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        👥 {booking.selectedChildren.length}명 • 💰 {booking.totalPrice?.toLocaleString()}원
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-600 mb-4">예약이 없습니다.</p>
+                <button
+                  onClick={() => router.push('/experiences')}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
+                >
+                  프로그램 둘러보기
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Recommendations Section */}
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-lg font-bold text-gray-900 mb-4">추천 프로그램</h2>
             <div className="space-y-3">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="border border-gray-200 rounded-lg p-3 hover:border-blue-300 transition-colors">
-                  <h3 className="font-semibold text-gray-900 text-sm">추천 프로그램 #{i}</h3>
-                  <p className="text-xs text-gray-600 mt-1">⭐ 4.5 (120 리뷰)</p>
-                  <button className="w-full mt-2 px-3 py-1 bg-blue-50 text-blue-600 text-xs font-medium rounded hover:bg-blue-100 transition-colors">
-                    자세히 보기
-                  </button>
-                </div>
-              ))}
+              <div className="text-center py-4 text-gray-600 text-sm">
+                <p className="mb-3">프로그램을 찾아보세요</p>
+                <button
+                  onClick={() => router.push('/experiences')}
+                  className="w-full px-3 py-2 bg-blue-600 text-white text-xs font-medium rounded hover:bg-blue-700 transition-colors"
+                >
+                  프로그램 둘러보기
+                </button>
+              </div>
             </div>
           </div>
         </div>
