@@ -15,13 +15,14 @@ export default function ProfilePage() {
   const [formData, setFormData] = useState({
     profileName: '',
     email: '',
-    childrenAges: '6,10',
   });
+  const [children, setChildren] = useState<Array<{ id: string; age: number }>>([]);
   const [password, setPassword] = useState({
     current: '',
     new: '',
     confirm: '',
   });
+  const [newChildAge, setNewChildAge] = useState<number>(6);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -34,8 +35,16 @@ export default function ProfilePage() {
       setFormData({
         profileName: user.profileName || '',
         email: user.email || '',
-        childrenAges: '6,10',
       });
+      // Initialize children from user data or empty array
+      if (user.childrenAges && Array.isArray(user.childrenAges)) {
+        setChildren(
+          user.childrenAges.map((age: number, idx: number) => ({
+            id: `child-${idx}`,
+            age,
+          }))
+        );
+      }
     }
   }, [user]);
 
@@ -51,11 +60,12 @@ export default function ProfilePage() {
     try {
       setIsSaving(true);
       setMessage(null);
-      await apiClient.updateProfile(formData.profileName, [6, 10]);
+      const childrenAges = children.map((c) => c.age);
+      await apiClient.updateProfile(formData.profileName, childrenAges);
       setMessage({ type: 'success', text: '프로필이 저장되었습니다.' });
       setIsEditing(false);
       if (user) {
-        setUser({ ...user, profileName: formData.profileName });
+        setUser({ ...user, profileName: formData.profileName, childrenAges });
       }
     } catch (error) {
       console.error('프로필 저장 실패:', error);
@@ -70,8 +80,15 @@ export default function ProfilePage() {
       setFormData({
         profileName: user.profileName || '',
         email: user.email || '',
-        childrenAges: '6,10',
       });
+      if (user.childrenAges && Array.isArray(user.childrenAges)) {
+        setChildren(
+          user.childrenAges.map((age: number, idx: number) => ({
+            id: `child-${idx}`,
+            age,
+          }))
+        );
+      }
     }
     setIsEditing(false);
   };
@@ -214,25 +231,72 @@ export default function ProfilePage() {
           <div className="bg-white rounded-lg shadow p-6 space-y-4">
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">자녀 나이 정보</h3>
-              <div className="space-y-3">
-                {['6세', '10세'].map((age, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
-                  >
-                    <div>
-                      <p className="font-medium text-gray-900">자녀 {i + 1}</p>
-                      <p className="text-sm text-gray-600">{age}</p>
+              {children.length > 0 ? (
+                <div className="space-y-3 mb-4">
+                  {children.map((child, i) => (
+                    <div
+                      key={child.id}
+                      className="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
+                    >
+                      <div>
+                        <p className="font-medium text-gray-900">자녀 {i + 1}</p>
+                        <p className="text-sm text-gray-600">{child.age}세</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setChildren(children.filter((_, idx) => idx !== i));
+                        }}
+                        className="px-3 py-1 text-sm border border-red-300 text-red-600 rounded hover:bg-red-50"
+                      >
+                        제거
+                      </button>
                     </div>
-                    <button className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">
-                      수정
-                    </button>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-600 text-sm mb-4">등록된 자녀가 없습니다.</p>
+              )}
+
+              {/* Add Child Section */}
+              <div className="border-t border-gray-200 pt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  자녀 추가 (나이)
+                </label>
+                <div className="flex gap-2">
+                  <select
+                    value={newChildAge}
+                    onChange={(e) => setNewChildAge(parseInt(e.target.value))}
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    {Array.from({ length: 16 }, (_, i) => i + 3).map((age) => (
+                      <option key={age} value={age}>
+                        {age}세
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => {
+                      setChildren([...children, { id: `child-${Date.now()}`, age: newChildAge }]);
+                      setNewChildAge(6);
+                    }}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                  >
+                    추가
+                  </button>
+                </div>
               </div>
-              <button className="w-full mt-4 px-4 py-2 border-2 border-dashed border-gray-300 text-gray-600 rounded-lg hover:border-blue-400 hover:text-blue-600 transition-colors">
-                + 자녀 추가
-              </button>
+
+              {/* Save Button */}
+              <div className="flex gap-2 pt-4 border-t border-gray-200 mt-4">
+                <button
+                  onClick={handleSaveProfile}
+                  disabled={isSaving}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                >
+                  <FiSave size={18} />
+                  {isSaving ? '저장 중...' : '저장'}
+                </button>
+              </div>
             </div>
           </div>
         )}
