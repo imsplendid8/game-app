@@ -87,6 +87,21 @@ export function getMetricsReport() {
   };
 }
 
+interface LCPEntry {
+  renderTime?: number;
+  loadTime?: number;
+}
+
+interface CLSEntry {
+  hadRecentInput?: boolean;
+  value?: number;
+}
+
+interface INPEntry {
+  processingStart?: number;
+  startTime?: number;
+}
+
 // Web Vitals tracking
 export function trackWebVitals() {
   if (typeof window === 'undefined') return;
@@ -94,13 +109,15 @@ export function trackWebVitals() {
   // Largest Contentful Paint (LCP)
   try {
     const observer = new PerformanceObserver(list => {
-      const entries = list.getEntries();
+      const entries = list.getEntries() as LCPEntry[];
       entries.forEach(entry => {
-        console.log('[LCP]', (entry as any).renderTime || (entry as any).loadTime);
+        // eslint-disable-next-line no-console
+        console.log('[LCP]', entry.renderTime || entry.loadTime);
       });
     });
     observer.observe({ type: 'largest-contentful-paint', buffered: true });
   } catch (e) {
+    // eslint-disable-next-line no-console
     console.warn('LCP observer not supported');
   }
 
@@ -108,28 +125,36 @@ export function trackWebVitals() {
   try {
     let clsValue = 0;
     const observer = new PerformanceObserver(list => {
-      list.getEntries().forEach(entry => {
-        if (!(entry as any).hadRecentInput) {
-          clsValue += (entry as any).value;
+      const entries = list.getEntries() as CLSEntry[];
+      entries.forEach(entry => {
+        if (!entry.hadRecentInput && entry.value !== undefined) {
+          clsValue += entry.value;
+          // eslint-disable-next-line no-console
           console.log('[CLS]', clsValue);
         }
       });
     });
     observer.observe({ type: 'layout-shift', buffered: true });
   } catch (e) {
+    // eslint-disable-next-line no-console
     console.warn('CLS observer not supported');
   }
 
   // First Input Delay (FID) / Interaction to Next Paint (INP)
   try {
     const observer = new PerformanceObserver(list => {
-      list.getEntries().forEach(entry => {
-        const delay = (entry as any).processingStart - (entry as any).startTime;
-        console.log('[INP]', delay.toFixed(2));
+      const entries = list.getEntries() as INPEntry[];
+      entries.forEach(entry => {
+        if (entry.processingStart !== undefined && entry.startTime !== undefined) {
+          const delay = entry.processingStart - entry.startTime;
+          // eslint-disable-next-line no-console
+          console.log('[INP]', delay.toFixed(2));
+        }
       });
     });
     observer.observe({ type: 'first-input', buffered: true });
   } catch (e) {
+    // eslint-disable-next-line no-console
     console.warn('INP observer not supported');
   }
 }

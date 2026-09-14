@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { FiX, FiSmile } from 'react-icons/fi';
-import { apiClient } from '@/lib/api';
 
 interface FeedbackData {
   rating: number;

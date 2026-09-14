@@ -12,19 +12,6 @@ export function initSentry() {
     tracesSampleRate: env.isProduction ? 0.1 : 1.0,
     enabled: env.isProduction,
 
-    // Performance monitoring
-    integrations: [
-      new Sentry.Replay({
-        maskAllText: true,
-        blockAllMedia: true,
-      }),
-    ],
-
-    // Capture replays for 10% of all transactions in production
-    // and 100% of transactions with an error
-    replaysSessionSampleRate: 0.1,
-    replaysOnErrorSampleRate: 1.0,
-
     // Ignore certain errors
     ignoreErrors: [
       // Network errors are often not actionable
@@ -42,11 +29,14 @@ export function initSentry() {
 }
 
 // Helper functions for error tracking
-export function captureException(error: Error, context?: Record<string, any>) {
+export function captureException(
+  error: Error,
+  context?: Record<string, unknown>
+) {
   Sentry.withScope(scope => {
     if (context) {
       Object.entries(context).forEach(([key, value]) => {
-        scope.setContext(key, value);
+        scope.setContext(key, { value });
       });
     }
     Sentry.captureException(error);

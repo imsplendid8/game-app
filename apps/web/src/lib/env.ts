@@ -30,7 +30,7 @@ export function getEnv(): Env {
     return validatedEnv;
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const missing = error.errors
+      const missing = error.issues
         .map(e => `${e.path.join('.')}: ${e.message}`)
         .join('\n');
       throw new Error(`Environment variable validation failed:\n${missing}`);
