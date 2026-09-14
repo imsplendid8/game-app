@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { MockAdapter } from './adapters/mock.adapter';
+import { DataLoaderAdapter } from './adapters/data-loader.adapter';
 import { SeoulPublicServiceAdapter } from './adapters/seoul-public-service.adapter';
 import { MuseumAdapter } from './adapters/museum.adapter';
 import { ScienceCenterAdapter } from './adapters/science-center.adapter';
@@ -14,6 +15,7 @@ export class CrawlerService {
 
   constructor(
     mockAdapter: MockAdapter,
+    dataLoaderAdapter: DataLoaderAdapter,
     seoulAdapter: SeoulPublicServiceAdapter,
     museumAdapter: MuseumAdapter,
     scienceCenterAdapter: ScienceCenterAdapter,
@@ -21,6 +23,7 @@ export class CrawlerService {
     broadcastingAdapter: BroadcastingAdapter,
   ) {
     this.registerAdapter(mockAdapter);
+    this.registerAdapter(dataLoaderAdapter);
     this.registerAdapter(seoulAdapter);
     this.registerAdapter(museumAdapter);
     this.registerAdapter(scienceCenterAdapter);

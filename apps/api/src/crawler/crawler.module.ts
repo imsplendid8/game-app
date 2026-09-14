@@ -4,6 +4,7 @@ import { CrawlerService } from './crawler.service';
 import { CrawlMonitoringService } from '@/modules/crawler/crawl-monitoring.service';
 import { CrawlMonitoringController } from '@/modules/crawler/crawl-monitoring.controller';
 import { MockAdapter } from './adapters/mock.adapter';
+import { DataLoaderAdapter } from './adapters/data-loader.adapter';
 import { SeoulPublicServiceAdapter } from './adapters/seoul-public-service.adapter';
 import { MuseumAdapter } from './adapters/museum.adapter';
 import { ScienceCenterAdapter } from './adapters/science-center.adapter';
@@ -18,6 +19,7 @@ import { AdapterState } from '@/modules/crawler/entities/adapter-state.entity';
     CrawlerService,
     CrawlMonitoringService,
     MockAdapter,
+    DataLoaderAdapter,
     SeoulPublicServiceAdapter,
     MuseumAdapter,
     ScienceCenterAdapter,
