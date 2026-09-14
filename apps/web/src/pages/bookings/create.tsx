@@ -5,18 +5,28 @@ import { apiClient } from '@/lib/api';
 import { MainLayout } from '@/components/layouts/MainLayout';
 import { FiArrowLeft, FiCheck, FiAlertCircle } from 'react-icons/fi';
 
+interface Experience {
+  id: string;
+  programName: string;
+  institution: { institutionName: string };
+  price?: number;
+  description?: string;
+}
+
 export default function BookingCreatePage() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuthStore();
-  const { experienceId, selectedDate, participants } = router.query;
+  const { experienceId } = router.query;
 
-  const [step, setStep] = useState<'details' | 'confirm'>('details');
+  const [step, setStep] = useState<'details' | 'confirm' | 'success'>('details');
+  const [experience, setExperience] = useState<Experience | null>(null);
   const [formData, setFormData] = useState({
-    selectedChildren: [] as string[],
+    selectedChildren: [] as { id: string; name: string; age: number }[],
     specialRequests: '',
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [bookingId, setBookingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -24,24 +34,58 @@ export default function BookingCreatePage() {
     }
   }, [isAuthenticated, isLoading, router]);
 
-  const experienceDetails = {
-    id: parseInt(experienceId as string) || 1,
-    name: '과학관 과학 체험',
-    institution: '국립과학관',
-    price: 15000,
-    date: new Date(selectedDate as string).toLocaleDateString('ko-KR'),
-    time: '14:00',
-    participants: parseInt(participants as string) || 1,
+  useEffect(() => {
+    if (!experienceId) return;
+
+    const fetchExperience = async () => {
+      try {
+        setIsSubmitting(true);
+        const data = await apiClient.getExperienceById(experienceId as string);
+        setExperience(data);
+      } catch (err) {
+        console.error('프로그램 정보 로드 실패:', err);
+        setError('프로그램 정보를 불러올 수 없습니다.');
+      } finally {
+        setIsSubmitting(false);
+      }
+    };
+
+    fetchExperience();
+  }, [experienceId]);
+
+  if (isLoading || !isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-lg text-gray-600">로딩 중...</div>
+      </div>
+    );
+  }
+
+  if (!experience && !error) {
+    return (
+      <MainLayout>
+        <div className="text-center py-12">로딩 중...</div>
+      </MainLayout>
+    );
+  }
+
+  const handleChildrenChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    const newChildren = [...formData.selectedChildren];
+    newChildren[index] = { ...newChildren[index], name: e.target.value };
+    setFormData((prev) => ({ ...prev, selectedChildren: newChildren }));
   };
 
-  const totalPrice = experienceDetails.price * experienceDetails.participants;
-
-  const handleChildrenSelect = (child: string) => {
+  const addChild = () => {
     setFormData((prev) => ({
       ...prev,
-      selectedChildren: prev.selectedChildren.includes(child)
-        ? prev.selectedChildren.filter((c) => c !== child)
-        : [...prev.selectedChildren, child],
+      selectedChildren: [...prev.selectedChildren, { id: Date.now().toString(), name: '', age: 6 }],
+    }));
+  };
+
+  const removeChild = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      selectedChildren: prev.selectedChildren.filter((_, i) => i !== index),
     }));
   };
 
@@ -51,13 +95,24 @@ export default function BookingCreatePage() {
       setError(null);
 
       if (formData.selectedChildren.length === 0) {
-        setError('최소 1명 이상의 자녀를 선택해주세요.');
+        setError('최소 1명 이상의 자녀 정보를 입력해주세요.');
         return;
       }
 
-      await apiClient.getExperiences();
+      if (formData.selectedChildren.some((c) => !c.name)) {
+        setError('모든 자녀의 이름을 입력해주세요.');
+        return;
+      }
 
-      setStep('confirm');
+      const booking = await apiClient.createBooking({
+        experienceId: experienceId as string,
+        selectedChildren: formData.selectedChildren,
+        specialRequests: formData.specialRequests,
+        totalPrice: (experience?.price || 0) * formData.selectedChildren.length,
+      });
+
+      setBookingId(booking.id);
+      setStep('success');
     } catch (err) {
       console.error('예약 생성 실패:', err);
       setError('예약 생성 중 오류가 발생했습니다.');
@@ -65,41 +120,6 @@ export default function BookingCreatePage() {
       setIsSubmitting(false);
     }
   };
-
-  const handleConfirmBooking = async () => {
-    try {
-      setIsSubmitting(true);
-      setError(null);
-
-      const bookingData = {
-        experienceId: experienceDetails.id,
-        date: selectedDate,
-        participants: experienceDetails.participants,
-        children: formData.selectedChildren,
-        specialRequests: formData.specialRequests,
-      };
-
-      await apiClient.getExperiences();
-
-      router.push({
-        pathname: '/bookings/success',
-        query: { bookingId: '1' },
-      });
-    } catch (err) {
-      console.error('예약 확정 실패:', err);
-      setError('예약 확정 중 오류가 발생했습니다.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  if (isLoading || !isAuthenticated) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg text-gray-600">로딩 중...</div>
-      </div>
-    );
-  }
 
   return (
     <MainLayout>
@@ -123,192 +143,117 @@ export default function BookingCreatePage() {
           </div>
         )}
 
-        {/* Step Indicator */}
-        <div className="flex gap-4">
-          <div
-            className={`flex-1 h-2 rounded-full transition-colors ${
-              step === 'details' || step === 'confirm' ? 'bg-blue-600' : 'bg-gray-300'
-            }`}
-          ></div>
-          <div
-            className={`flex-1 h-2 rounded-full transition-colors ${
-              step === 'confirm' ? 'bg-blue-600' : 'bg-gray-300'
-            }`}
-          ></div>
-        </div>
-
-        {/* Details Step */}
-        {step === 'details' && (
-          <div className="space-y-6">
-            {/* Program Summary */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-bold text-gray-900 mb-4">프로그램 정보</h2>
-              <div className="space-y-2 text-sm text-gray-600">
-                <p>
-                  <span className="font-medium text-gray-900">{experienceDetails.name}</span>
-                </p>
-                <p>{experienceDetails.institution}</p>
-                <p>📅 {experienceDetails.date} {experienceDetails.time}</p>
-                <p>👥 {experienceDetails.participants}명</p>
-                <p className="text-lg font-bold text-blue-600 mt-4">
-                  총 {totalPrice.toLocaleString()}원
-                </p>
-              </div>
-            </div>
-
-            {/* Children Selection */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">참여할 자녀 선택</h3>
-              <div className="space-y-3">
-                {['김철수 (8세)', '김영희 (6세)'].map((child) => (
-                  <label key={child} className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-                    <input
-                      type="checkbox"
-                      checked={formData.selectedChildren.includes(child)}
-                      onChange={() => handleChildrenSelect(child)}
-                      className="w-5 h-5 rounded text-blue-600"
-                    />
-                    <span className="text-gray-900 font-medium">{child}</span>
-                  </label>
-                ))}
-              </div>
-              <p className="text-xs text-gray-500 mt-3">
-                * 참여할 자녀를 선택해주세요
-              </p>
-            </div>
-
-            {/* Special Requests */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">특별한 요청사항</h3>
-              <textarea
-                value={formData.specialRequests}
-                onChange={(e) =>
-                  setFormData({ ...formData, specialRequests: e.target.value })
-                }
-                placeholder="알레르기, 특별한 배려사항 등을 입력해주세요"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                rows={4}
-              />
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-3">
+        {/* Success Screen */}
+        {step === 'success' && (
+          <div className="text-center space-y-6 py-12">
+            <div className="text-6xl">✅</div>
+            <h1 className="text-2xl font-bold text-gray-900">예약이 완료되었습니다!</h1>
+            <p className="text-gray-600">예약 번호: {bookingId}</p>
+            <div className="flex gap-4 justify-center">
               <button
-                onClick={() => router.back()}
-                className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                onClick={() => router.push(`/bookings/${bookingId}`)}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
               >
-                취소
+                예약 상세보기
               </button>
               <button
-                onClick={handleCreateBooking}
-                disabled={isSubmitting}
-                className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                onClick={() => router.push('/bookings')}
+                className="px-6 py-2 border border-blue-600 text-blue-600 rounded-lg font-medium hover:bg-blue-50"
               >
-                {isSubmitting ? '처리 중...' : '다음'}
+                예약 목록
               </button>
             </div>
           </div>
         )}
 
-        {/* Confirm Step */}
-        {step === 'confirm' && (
+        {/* Booking Form */}
+        {step !== 'success' && experience && (
           <div className="space-y-6">
-            {/* Confirmation Summary */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-              <div className="flex gap-3 mb-4">
-                <FiCheck className="text-blue-600 flex-shrink-0" size={24} />
-                <div>
-                  <h2 className="text-lg font-bold text-blue-900">예약 정보를 확인해주세요</h2>
-                  <p className="text-sm text-blue-800 mt-1">아래 정보가 맞으면 예약을 확정하세요</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Summary Details */}
-            <div className="bg-white rounded-lg shadow p-6 space-y-4">
-              <div className="border-b border-gray-200 pb-4">
-                <p className="text-sm text-gray-600 mb-1">프로그램</p>
-                <p className="font-semibold text-gray-900">{experienceDetails.name}</p>
-              </div>
-
-              <div className="border-b border-gray-200 pb-4">
-                <p className="text-sm text-gray-600 mb-1">일시</p>
-                <p className="font-semibold text-gray-900">
-                  {experienceDetails.date} {experienceDetails.time}
-                </p>
-              </div>
-
-              <div className="border-b border-gray-200 pb-4">
-                <p className="text-sm text-gray-600 mb-1">참여 아이</p>
-                <div className="space-y-1">
-                  {formData.selectedChildren.map((child) => (
-                    <p key={child} className="font-semibold text-gray-900">
-                      {child}
-                    </p>
-                  ))}
-                </div>
-              </div>
-
-              {formData.specialRequests && (
-                <div className="border-b border-gray-200 pb-4">
-                  <p className="text-sm text-gray-600 mb-1">특별한 요청사항</p>
-                  <p className="font-semibold text-gray-900">{formData.specialRequests}</p>
-                </div>
-              )}
-
-              <div className="bg-blue-50 rounded-lg p-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-700 font-medium">총 금액</span>
-                  <span className="text-2xl font-bold text-blue-600">
-                    {totalPrice.toLocaleString()}원
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Agreements */}
+            {/* Program Summary */}
             <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="font-bold text-gray-900 mb-4">약관 동의</h3>
-              <div className="space-y-3">
-                <label className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    defaultChecked
-                    className="w-5 h-5 rounded text-blue-600"
-                  />
-                  <span className="text-sm text-gray-700">
-                    예약 약관에 동의합니다
-                  </span>
-                </label>
-                <label className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    defaultChecked
-                    className="w-5 h-5 rounded text-blue-600"
-                  />
-                  <span className="text-sm text-gray-700">
-                    취소 정책에 동의합니다
-                  </span>
-                </label>
+              <h2 className="text-lg font-bold text-gray-900 mb-4">프로그램 정보</h2>
+              <div className="space-y-2">
+                <p className="font-bold text-gray-900">{experience.programName}</p>
+                <p className="text-gray-600">{experience.institution.institutionName}</p>
+                {experience.price && (
+                  <p className="text-gray-600">가격: {experience.price.toLocaleString()}원</p>
+                )}
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-3">
+            {/* Children Input */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-lg font-bold text-gray-900 mb-4">참여 자녀 정보</h2>
+              <div className="space-y-4">
+                {formData.selectedChildren.map((child, index) => (
+                  <div key={child.id} className="flex gap-3">
+                    <input
+                      type="text"
+                      placeholder="이름"
+                      value={child.name}
+                      onChange={(e) => handleChildrenChange(e, index)}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
+                    />
+                    <select
+                      value={child.age}
+                      onChange={(e) => {
+                        const newChildren = [...formData.selectedChildren];
+                        newChildren[index] = { ...newChildren[index], age: parseInt(e.target.value) };
+                        setFormData((prev) => ({ ...prev, selectedChildren: newChildren }));
+                      }}
+                      className="px-4 py-2 border border-gray-300 rounded-lg"
+                    >
+                      {Array.from({ length: 15 }, (_, i) => i + 3).map((age) => (
+                        <option key={age} value={age}>
+                          {age}세
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={() => removeChild(index)}
+                      className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg"
+                    >
+                      제거
+                    </button>
+                  </div>
+                ))}
+              </div>
               <button
-                onClick={() => setStep('details')}
-                className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                onClick={addChild}
+                className="mt-4 w-full px-4 py-2 border border-blue-600 text-blue-600 rounded-lg font-medium hover:bg-blue-50"
               >
-                이전
-              </button>
-              <button
-                onClick={handleConfirmBooking}
-                disabled={isSubmitting}
-                className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
-              >
-                {isSubmitting ? '예약 중...' : '예약 확정'}
+                + 자녀 추가
               </button>
             </div>
+
+            {/* Special Requests */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-lg font-bold text-gray-900 mb-4">특별 요청사항</h2>
+              <textarea
+                value={formData.specialRequests}
+                onChange={(e) => setFormData((prev) => ({ ...prev, specialRequests: e.target.value }))}
+                placeholder="특별한 요청사항이 있으신가요? (선택사항)"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg h-24"
+              />
+            </div>
+
+            {/* Total Price */}
+            {experience.price && (
+              <div className="bg-blue-50 rounded-lg p-6">
+                <div className="text-lg font-bold text-gray-900">
+                  예상 총액: {(experience.price * formData.selectedChildren.length).toLocaleString()}원
+                </div>
+              </div>
+            )}
+
+            {/* Submit Button */}
+            <button
+              onClick={handleCreateBooking}
+              disabled={isSubmitting}
+              className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50"
+            >
+              {isSubmitting ? '처리 중...' : '예약 완료'}
+            </button>
           </div>
         )}
       </div>

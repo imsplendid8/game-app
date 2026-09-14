@@ -16,12 +16,33 @@ export default function BookingReviewPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [booking, setBooking] = useState<any>(null);
+  const [isLoadingData, setIsLoadingData] = useState(true);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push('/login');
     }
   }, [isAuthenticated, isLoading, router]);
+
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchBooking = async () => {
+      try {
+        setIsLoadingData(true);
+        const data = await apiClient.getBookingById(id as string);
+        setBooking(data);
+      } catch (err) {
+        console.error('예약 정보 로드 실패:', err);
+        setError('예약 정보를 불러올 수 없습니다.');
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+
+    fetchBooking();
+  }, [id]);
 
   if (isLoading || !isAuthenticated) {
     return (
@@ -31,13 +52,17 @@ export default function BookingReviewPage() {
     );
   }
 
-  const bookingDetails = {
-    id: id || '1',
-    programName: '과학관 과학 체험',
-    institution: '국립과학관',
-    date: '2024년 9월 16일',
-    time: '14:00',
-    image: 'https://via.placeholder.com/600x400',
+  if (isLoadingData) {
+    return (
+      <MainLayout>
+        <div className="text-center py-12">로딩 중...</div>
+      </MainLayout>
+    );
+  }
+
+  const bookingDetails = booking?.experience || {
+    programName: '프로그램 정보 없음',
+    institution: { institutionName: '기관 정보 없음' },
   };
 
   const handleSubmitReview = async () => {
@@ -55,13 +80,11 @@ export default function BookingReviewPage() {
       setIsSubmitting(true);
       setError(null);
 
-      const reviewData = {
-        bookingId: id,
+      await apiClient.createReview({
+        bookingId: id as string,
         rating,
-        text: reviewText,
-      };
-
-      await apiClient.getExperiences();
+        reviewText,
+      });
 
       setSuccess(true);
       setRating(0);
@@ -132,21 +155,20 @@ export default function BookingReviewPage() {
         {/* Program Info Card */}
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex gap-4">
-            <img
-              src={bookingDetails.image}
-              alt={bookingDetails.programName}
-              className="w-24 h-24 rounded-lg object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
-            />
+            <div className="w-24 h-24 rounded-lg bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center text-blue-400">
+              <svg width="80" height="80" viewBox="0 0 80 80" fill="currentColor">
+                <path d="M40 0C17.9 0 0 17.9 0 40s17.9 40 40 40 40-17.9 40-40S62.1 0 40 0zm0 72c-17.6 0-32-14.4-32-32s14.4-32 32-32 32 14.4 32 32-14.4 32-32 32z" />
+              </svg>
+            </div>
             <div className="flex-1">
               <h3 className="text-lg font-bold text-gray-900">
                 {bookingDetails.programName}
               </h3>
-              <p className="text-sm text-gray-600 mt-1">{bookingDetails.institution}</p>
+              <p className="text-sm text-gray-600 mt-1">
+                {bookingDetails.institution?.institutionName}
+              </p>
               <p className="text-sm text-gray-600 mt-2">
-                📅 {bookingDetails.date} {bookingDetails.time}
+                📅 {new Date(booking.createdAt).toLocaleDateString('ko-KR')}
               </p>
             </div>
           </div>
