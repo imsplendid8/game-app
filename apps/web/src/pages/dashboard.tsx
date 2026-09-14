@@ -6,11 +6,32 @@ import { apiClient } from '@/lib/api';
 import { MainLayout } from '@/components/layouts/MainLayout';
 import { FiCalendar, FiBell, FiBookmark, FiTrendingUp } from 'react-icons/fi';
 
+interface Booking {
+  id: string;
+  confirmationNumber: string;
+  status: string;
+  createdAt: string;
+  selectedChildren: Array<{ id: string; name: string; age: number }>;
+  totalPrice?: number;
+  experience?: {
+    id: string;
+    programName: string;
+    institution: { institutionName: string };
+  };
+}
+
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  isRead?: boolean;
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuthStore();
   const { bookmarks, hydrate } = useBookmarkStore();
-  const [bookings, setBookings] = useState<any[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [stats, setStats] = useState({
     upcomingBookings: 0,
     unreadNotifications: 0,
@@ -41,11 +62,11 @@ export default function DashboardPage() {
         // Fetch notifications
         const notifications = await apiClient.getNotifications();
         const unreadCount = Array.isArray(notifications)
-          ? notifications.filter((n: { isRead?: boolean }) => !n.isRead).length
+          ? notifications.filter((n: Notification) => !n.isRead).length
           : 0;
 
         setStats({
-          upcomingBookings: bookingsList.filter((b: any) => b.status === 'PENDING' || b.status === 'CONFIRMED').length,
+          upcomingBookings: bookingsList.filter((b: Booking) => b.status === 'PENDING' || b.status === 'CONFIRMED').length,
           unreadNotifications: unreadCount,
           savedPrograms: bookmarks.length,
           trendingPrograms: 0,

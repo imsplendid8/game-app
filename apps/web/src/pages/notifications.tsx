@@ -5,6 +5,17 @@ import { apiClient } from '@/lib/api';
 import { MainLayout } from '@/components/layouts/MainLayout';
 import { FiBell, FiCheck, FiTrash2 } from 'react-icons/fi';
 
+interface ApiNotification {
+  id: string;
+  title?: string;
+  message?: string;
+  type?: string;
+  isRead?: boolean;
+  createdAt?: string;
+  actionUrl?: string;
+  actionLabel?: string;
+}
+
 interface Notification {
   id: string;
   title: string;
@@ -40,7 +51,7 @@ export default function NotificationsPage() {
         const data = await apiClient.getNotifications();
         const notificationsList = Array.isArray(data) ? data : data.data || [];
 
-        const mappedNotifications = notificationsList.map((notif: any) => ({
+        const mappedNotifications = notificationsList.map((notif: ApiNotification) => ({
           id: notif.id,
           title: notif.title || '알림',
           message: notif.message || '',

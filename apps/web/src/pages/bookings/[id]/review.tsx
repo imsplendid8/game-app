@@ -5,6 +5,21 @@ import { apiClient } from '@/lib/api';
 import { MainLayout } from '@/components/layouts/MainLayout';
 import { FiArrowLeft, FiStar, FiCheck, FiAlertCircle } from 'react-icons/fi';
 
+interface Booking {
+  id: string;
+  confirmationNumber: string;
+  experience?: {
+    id: string;
+    programName: string;
+    institution: { institutionName: string };
+  };
+  selectedChildren: Array<{ id: string; name: string; age: number }>;
+  specialRequests?: string;
+  totalPrice?: number;
+  status: string;
+  createdAt: string;
+}
+
 export default function BookingReviewPage() {
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAuthStore();
@@ -16,7 +31,7 @@ export default function BookingReviewPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [booking, setBooking] = useState<any>(null);
+  const [booking, setBooking] = useState<Booking | null>(null);
   const [isLoadingData, setIsLoadingData] = useState(true);
 
   useEffect(() => {
@@ -167,9 +182,11 @@ export default function BookingReviewPage() {
               <p className="text-sm text-gray-600 mt-1">
                 {bookingDetails.institution?.institutionName}
               </p>
-              <p className="text-sm text-gray-600 mt-2">
-                📅 {new Date(booking.createdAt).toLocaleDateString('ko-KR')}
-              </p>
+              {booking && (
+                <p className="text-sm text-gray-600 mt-2">
+                  📅 {new Date(booking.createdAt).toLocaleDateString('ko-KR')}
+                </p>
+              )}
             </div>
           </div>
         </div>
