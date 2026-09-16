@@ -73,10 +73,55 @@ export default function DashboardPage() {
         });
       } catch (err) {
         console.error('대시보드 데이터 로드 실패:', err);
-        setStats((prev) => ({
-          ...prev,
+        // 데모용 Mock 데이터
+        const mockBookings: Booking[] = [
+          {
+            id: '1',
+            confirmationNumber: 'BK-2026-001',
+            status: 'CONFIRMED',
+            createdAt: new Date().toISOString(),
+            selectedChildren: [{ id: '1', name: '김민준', age: 7 }],
+            totalPrice: 50000,
+            experience: {
+              id: '1',
+              programName: '아이 과학 체험 교실',
+              institution: { institutionName: 'DKIS 과학관' },
+            },
+          },
+          {
+            id: '2',
+            confirmationNumber: 'BK-2026-002',
+            status: 'CONFIRMED',
+            createdAt: new Date().toISOString(),
+            selectedChildren: [{ id: '1', name: '김민준', age: 7 }, { id: '2', name: '김은지', age: 5 }],
+            totalPrice: 70000,
+            experience: {
+              id: '2',
+              programName: '역사 탐방 프로그램',
+              institution: { institutionName: 'DKIS 박물관' },
+            },
+          },
+          {
+            id: '3',
+            confirmationNumber: 'BK-2026-003',
+            status: 'PENDING',
+            createdAt: new Date().toISOString(),
+            selectedChildren: [{ id: '1', name: '김민준', age: 7 }],
+            totalPrice: 45000,
+            experience: {
+              id: '3',
+              programName: '미술 창작 워크숍',
+              institution: { institutionName: 'DKIS 미술관' },
+            },
+          },
+        ];
+        setBookings(mockBookings);
+        setStats({
+          upcomingBookings: 2,
+          unreadNotifications: 3,
           savedPrograms: bookmarks.length,
-        }));
+          trendingPrograms: 5,
+        });
       } finally {
         setIsLoadingData(false);
       }

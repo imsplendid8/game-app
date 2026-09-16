@@ -100,8 +100,91 @@ export default function ExperiencesPage() {
         setRatings(newRatings);
       } catch (err) {
         console.error('프로그램 데이터 로드 실패:', err);
-        setError('프로그램을 불러올 수 없습니다.');
-        setExperiences([]);
+        // 데모용 Mock 데이터
+        const mockExperiences: Experience[] = [
+          {
+            id: '1',
+            programName: '아이 과학 체험 교실',
+            institution: { institutionName: 'DKIS 과학관' },
+            description: '초등학생을 위한 실험 기반 과학 학습 프로그램',
+            price: 50000,
+            targetAgeMin: 6,
+            targetAgeMax: 12,
+            bookingMethod: 'online',
+            rating: 4.8,
+            reviewCount: 125,
+          },
+          {
+            id: '2',
+            programName: '역사 탐방 프로그램',
+            institution: { institutionName: 'DKIS 박물관' },
+            description: '문화유산을 직접 체험하는 역사 교육',
+            price: 45000,
+            targetAgeMin: 8,
+            targetAgeMax: 14,
+            bookingMethod: 'online',
+            rating: 4.6,
+            reviewCount: 98,
+          },
+          {
+            id: '3',
+            programName: '미술 창작 워크숍',
+            institution: { institutionName: 'DKIS 미술관' },
+            description: '전문가와 함께하는 미술 표현 활동',
+            price: 40000,
+            targetAgeMin: 5,
+            targetAgeMax: 10,
+            bookingMethod: 'online',
+            rating: 4.7,
+            reviewCount: 156,
+          },
+          {
+            id: '4',
+            programName: '코딩과 로봇 체험',
+            institution: { institutionName: 'DKIS IT센터' },
+            description: '미래 기술을 체험하는 코딩과 로봇 프로그램',
+            price: 60000,
+            targetAgeMin: 7,
+            targetAgeMax: 13,
+            bookingMethod: 'online',
+            rating: 4.9,
+            reviewCount: 203,
+          },
+          {
+            id: '5',
+            programName: '음악 오케스트라 체험',
+            institution: { institutionName: 'DKIS 음악홀' },
+            description: '오케스트라의 악기와 음악을 배우는 프로그램',
+            price: 55000,
+            targetAgeMin: 6,
+            targetAgeMax: 12,
+            bookingMethod: 'online',
+            rating: 4.5,
+            reviewCount: 87,
+          },
+          {
+            id: '6',
+            programName: '생태 탐사 여행',
+            institution: { institutionName: 'DKIS 자연학습원' },
+            description: '자연 속에서 배우는 생태계 교육',
+            price: 65000,
+            targetAgeMin: 7,
+            targetAgeMax: 14,
+            bookingMethod: 'online',
+            rating: 4.8,
+            reviewCount: 142,
+          },
+        ];
+        setExperiences(mockExperiences);
+        setTotalResults(mockExperiences.length);
+        setRatings({
+          '1': 4.8,
+          '2': 4.6,
+          '3': 4.7,
+          '4': 4.9,
+          '5': 4.5,
+          '6': 4.8,
+        });
       } finally {
         setIsLoadingData(false);
       }
