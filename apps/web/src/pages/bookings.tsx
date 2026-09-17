@@ -3,13 +3,15 @@ import { useRouter } from 'next/router';
 import { useAuthStore } from '@/store/authStore';
 import { apiClient } from '@/lib/api';
 import { MainLayout } from '@/components/layouts/MainLayout';
-import { FiCalendar, FiUsers, FiChevronRight, FiAlertCircle } from 'react-icons/fi';
+import { BookingCalendar } from '@/components/BookingCalendar';
+import { FiCalendar, FiUsers, FiChevronRight, FiAlertCircle, FiList } from 'react-icons/fi';
 
 interface Booking {
   id: string;
   confirmationNumber: string;
   experienceId: string;
   userId: string;
+  experienceDate: string;
   selectedChildren: { id: string; name: string; age: number }[];
   specialRequests?: string;
   totalPrice?: number;
@@ -26,6 +28,7 @@ interface Booking {
 export default function BookingsPage() {
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAuthStore();
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
@@ -56,6 +59,11 @@ export default function BookingsPage() {
 
     fetchBookings();
   }, [isAuthenticated]);
+
+  const handleBookingUpdate = async () => {
+    const data = await apiClient.getBookings();
+    setBookings(Array.isArray(data) ? data : data.data || []);
+  };
 
   if (isLoading || !isAuthenticated) {
     return (
@@ -94,12 +102,41 @@ export default function BookingsPage() {
         )}
 
         {/* Page Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">예약 현황</h1>
-          <p className="text-gray-600 mt-2">아이들의 예약된 경험을 관리하세요</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">예약 현황</h1>
+            <p className="text-gray-600 mt-2">아이들의 예약된 경험을 관리하세요</p>
+          </div>
+
+          {/* View Mode Toggle */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => setViewMode('list')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                viewMode === 'list'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <FiList size={18} />
+              목록
+            </button>
+            <button
+              onClick={() => setViewMode('calendar')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                viewMode === 'calendar'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <FiCalendar size={18} />
+              캘린더
+            </button>
+          </div>
         </div>
 
-        {/* Stats */}
+        {/* Stats - Show only in list view */}
+        {viewMode === 'list' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button
             onClick={() => setFilterStatus(null)}
@@ -135,9 +172,15 @@ export default function BookingsPage() {
             <p className="text-2xl font-bold mt-1">{completedCount}</p>
           </button>
         </div>
+        )}
+
+        {/* Calendar View */}
+        {viewMode === 'calendar' && !isLoadingData && (
+          <BookingCalendar bookings={bookings} onBookingUpdate={handleBookingUpdate} />
+        )}
 
         {/* Bookings List */}
-        {isLoadingData ? (
+        {viewMode === 'list' && (isLoadingData ? (
           <div className="text-center py-12">
             <div className="text-lg text-gray-600">예약 정보를 불러오는 중...</div>
           </div>
@@ -208,7 +251,7 @@ export default function BookingsPage() {
               프로그램 둘러보기
             </button>
           </div>
-        )}
+        ))}
       </div>
     </MainLayout>
   );

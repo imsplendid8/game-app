@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Patch, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { BookingsService } from './bookings.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
@@ -31,6 +31,17 @@ export class BookingsController {
   @ApiOperation({ summary: 'Get booking by ID' })
   async findOne(@Param('id') id: string, @CurrentUser() user: any) {
     return await this.bookingsService.findOneByUser(user.id, id);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Update booking (e.g., reschedule date)' })
+  async update(
+    @Param('id') id: string,
+    @CurrentUser() user: any,
+    @Body() updateData: any,
+  ) {
+    await this.bookingsService.findOneByUser(user.id, id);
+    return await this.bookingsService.update(id, updateData);
   }
 
   @Delete(':id')

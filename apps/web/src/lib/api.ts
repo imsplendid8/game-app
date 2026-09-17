@@ -141,6 +141,11 @@ class ApiClient {
     return response.data;
   }
 
+  async updateBooking(id: string, data: Record<string, unknown>) {
+    const response = await this.client.patch(`/bookings/${id}`, data);
+    return response.data;
+  }
+
   async cancelBooking(id: string) {
     const response = await this.client.delete(`/bookings/${id}`);
     return response.data;
