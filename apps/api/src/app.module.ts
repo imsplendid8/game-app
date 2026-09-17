@@ -17,6 +17,28 @@ import { AuthModule } from '@/modules/auth/auth.module';
 import { CrawlerModule } from '@/crawler/crawler.module';
 import { JobsModule } from '@/modules/jobs/jobs.module';
 
+const getTypeOrmConfig = () => {
+  const useSqlite = process.env.USE_SQLITE === 'true' || process.env.DATABASE_URL?.includes('sqlite');
+
+  if (useSqlite) {
+    return {
+      type: 'sqlite' as const,
+      database: process.env.DATABASE_URL?.replace('sqlite:', '') || '/home/user/game-app/withdkis_dev.db',
+      synchronize: process.env.NODE_ENV !== 'production',
+      logging: process.env.NODE_ENV === 'development',
+      autoLoadEntities: true,
+    };
+  }
+
+  return {
+    type: 'postgres' as const,
+    url: process.env.DATABASE_URL || 'postgresql://postgres:password@localhost:5432/withdkis_dev',
+    synchronize: process.env.NODE_ENV !== 'production',
+    logging: process.env.NODE_ENV === 'development',
+    autoLoadEntities: true,
+  };
+};
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -32,13 +54,7 @@ import { JobsModule } from '@/modules/jobs/jobs.module';
         enableReadyCheck: false,
       },
     }),
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      url: process.env.DATABASE_URL || 'postgresql://postgres:password@localhost:5432/withdkis_dev',
-      synchronize: process.env.NODE_ENV !== 'production',
-      logging: process.env.NODE_ENV === 'development',
-      autoLoadEntities: true,
-    }),
+    TypeOrmModule.forRoot(getTypeOrmConfig()),
     HealthModule,
     InstitutionsModule,
     ExperiencesModule,
