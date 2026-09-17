@@ -39,8 +39,8 @@ export class ExperienceRun {
   bookingCloseAt: Date;
 
   @Column({
-    type: 'enum',
-    enum: ['FIRST_COME', 'LOTTERY', 'ALWAYS_AVAILABLE'],
+    type: 'varchar',
+    length: 50,
   })
   bookingMethod: string;
 
@@ -54,15 +54,15 @@ export class ExperienceRun {
   price: number;
 
   @Column({
-    type: 'enum',
-    enum: ['UNKNOWN', 'OPENING_SOON', 'OPEN', 'CLOSED', 'CANCELLED'],
+    type: 'varchar',
+    length: 50,
     default: 'UNKNOWN',
   })
   status: string;
 
   @Column({
-    type: 'enum',
-    enum: ['AVAILABLE', 'CAPTCHA_REQUIRED', 'QUEUE_REQUIRED', 'MANUAL_REQUIRED'],
+    type: 'varchar',
+    length: 50,
   })
   automationStatus: string;
 
