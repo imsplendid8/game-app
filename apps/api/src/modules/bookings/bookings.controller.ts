@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Delete, Patch, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Patch, UseGuards, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { BookingsService } from './bookings.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
@@ -19,6 +19,25 @@ export class BookingsController {
     @Body() createBookingDto: CreateBookingDto,
   ) {
     return await this.bookingsService.create(user.id, createBookingDto);
+  }
+
+  @Get('search')
+  @ApiOperation({ summary: 'Search and filter bookings' })
+  async search(
+    @CurrentUser() user: any,
+    @Query('keyword') keyword?: string,
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+    @Query('status') status?: string,
+    @Query('sort') sort?: 'newest' | 'oldest' | 'price_low' | 'price_high',
+  ) {
+    return await this.bookingsService.search(user.id, {
+      keyword,
+      dateFrom,
+      dateTo,
+      status,
+      sort,
+    });
   }
 
   @Get()

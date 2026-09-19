@@ -4,6 +4,7 @@ import { useAuthStore } from '@/store/authStore';
 import { apiClient } from '@/lib/api';
 import { MainLayout } from '@/components/layouts/MainLayout';
 import { BookingCalendar } from '@/components/BookingCalendar';
+import { SearchFilters } from '@/components/SearchFilters';
 import { FiCalendar, FiUsers, FiChevronRight, FiAlertCircle, FiList } from 'react-icons/fi';
 
 interface Booking {
@@ -33,6 +34,8 @@ export default function BookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isSearchActive, setIsSearchActive] = useState(false);
+  const [searchResults, setSearchResults] = useState<Booking[]>([]);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -65,6 +68,35 @@ export default function BookingsPage() {
     setBookings(Array.isArray(data) ? data : data.data || []);
   };
 
+  const handleSearch = async (params: {
+    keyword?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    status?: string;
+    sort?: 'newest' | 'oldest' | 'price_low' | 'price_high';
+  }) => {
+    try {
+      setIsLoadingData(true);
+      setError(null);
+
+      if (Object.keys(params).length === 0) {
+        // Reset search
+        setIsSearchActive(false);
+        setSearchResults([]);
+      } else {
+        const data = await apiClient.searchBookings(params);
+        setSearchResults(Array.isArray(data) ? data : data.data || []);
+        setIsSearchActive(true);
+        setFilterStatus(null);
+      }
+    } catch (err) {
+      console.error('검색 실패:', err);
+      setError('검색 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
+
   if (isLoading || !isAuthenticated) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -83,7 +115,9 @@ export default function BookingsPage() {
     return statusMap[status] || statusMap.PENDING;
   };
 
-  const filteredBookings = bookings.filter((booking) => {
+  const displayBookings = isSearchActive ? searchResults : bookings;
+
+  const filteredBookings = displayBookings.filter((booking) => {
     if (!filterStatus) return true;
     return booking.status === filterStatus;
   });
@@ -174,9 +208,21 @@ export default function BookingsPage() {
         </div>
         )}
 
+        {/* Search Filters */}
+        {viewMode === 'list' && <SearchFilters onSearch={handleSearch} isLoading={isLoadingData} />}
+
         {/* Calendar View */}
         {viewMode === 'calendar' && !isLoadingData && (
           <BookingCalendar bookings={bookings} onBookingUpdate={handleBookingUpdate} />
+        )}
+
+        {/* Search Status */}
+        {viewMode === 'list' && isSearchActive && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p className="text-blue-800">
+              검색 결과: <strong>{filteredBookings.length}</strong>개 ({displayBookings.length}개 중)
+            </p>
+          </div>
         )}
 
         {/* Bookings List */}

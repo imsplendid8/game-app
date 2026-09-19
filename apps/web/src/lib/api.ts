@@ -141,6 +141,17 @@ class ApiClient {
     return response.data;
   }
 
+  async searchBookings(params: {
+    keyword?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    status?: string;
+    sort?: 'newest' | 'oldest' | 'price_low' | 'price_high';
+  }) {
+    const response = await this.client.get('/bookings/search', { params });
+    return response.data;
+  }
+
   async updateBooking(id: string, data: Record<string, unknown>) {
     const response = await this.client.patch(`/bookings/${id}`, data);
     return response.data;
