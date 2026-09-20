@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bull';
+import { ScheduleModule } from '@nestjs/schedule';
 import { dataSource } from '@/database/data-source';
 import { HealthModule } from '@/modules/health/health.module';
 import { InstitutionsModule } from '@/modules/institutions/institutions.module';
@@ -16,6 +17,11 @@ import { NotificationsModule } from '@/modules/notifications/notifications.modul
 import { AuthModule } from '@/modules/auth/auth.module';
 import { CrawlerModule } from '@/crawler/crawler.module';
 import { JobsModule } from '@/modules/jobs/jobs.module';
+import { EmailService } from '@/services/email.service';
+import { BookingReminderService } from '@/services/booking-reminder.service';
+import { Booking } from '@/modules/bookings/entities/booking.entity';
+import { BookingReminder } from '@/modules/bookings/entities/booking-reminder.entity';
+import { User } from '@/modules/users/entities/user.entity';
 
 const getTypeOrmConfig = () => {
   const useSqlite = process.env.USE_SQLITE === 'true' || process.env.DATABASE_URL?.includes('sqlite');
@@ -45,6 +51,7 @@ const getTypeOrmConfig = () => {
       isGlobal: true,
       envFilePath: '.env',
     }),
+    ScheduleModule.forRoot(),
     BullModule.forRoot({
       redis: {
         host: process.env.REDIS_HOST || 'localhost',
@@ -55,6 +62,7 @@ const getTypeOrmConfig = () => {
       },
     }),
     TypeOrmModule.forRoot(getTypeOrmConfig()),
+    TypeOrmModule.forFeature([Booking, BookingReminder, User]),
     HealthModule,
     InstitutionsModule,
     ExperiencesModule,
@@ -70,6 +78,6 @@ const getTypeOrmConfig = () => {
     JobsModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [EmailService, BookingReminderService],
 })
 export class AppModule {}
