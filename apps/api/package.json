@@ -14,7 +14,8 @@
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
     "db:migrate": "typeorm migration:run -d src/database/data-source.ts",
     "db:migrate:create": "typeorm migration:create",
-    "db:seed": "node dist/database/seed.js"
+    "db:seed": "node dist/database/seed.js",
+    "crawler:verify": "ts-node --project tsconfig.json scripts/verify-seoul-api.ts"
   },
   "dependencies": {
     "@bull-board/express": "^9.10.0",

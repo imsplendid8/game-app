@@ -16,8 +16,31 @@ export const SEOUL_SERVICES = [
   'ListPublicReservationCulture',
 ] as const;
 
+export const SEOUL_BASE_URL = 'http://openapi.seoul.go.kr:8088';
+
 /** 한 번의 요청으로 받을 수 있는 최대 건수 (서울 오픈API 제한) */
 const PAGE_SIZE = 1000;
+
+/**
+ * mapRow가 실제로 읽는 응답 필드. 검증 스크립트가 실제 응답과 대조할 때 쓴다.
+ * 매핑을 바꾸면 이 목록도 함께 고쳐야 한다.
+ */
+export const SEOUL_ROW_FIELDS = [
+  'SVCID',
+  'SVCNM',
+  'DTLCONT',
+  'PLACENM',
+  'SVCURL',
+  'SVCSTATNM',
+  'PAYATNM',
+  'USETGTINFO',
+  'RCPTBGNDT',
+  'RCPTENDDT',
+  'SVCOPNBGNDT',
+] as const;
+
+/** 이 필드가 없으면 행 자체를 매핑할 수 없다 */
+export const SEOUL_REQUIRED_FIELDS = ['SVCID', 'SVCNM'] as const;
 
 interface SeoulReservationRow {
   SVCID?: string;
@@ -50,7 +73,7 @@ export class SeoulPublicServiceAdapter extends BaseAdapter {
   constructor() {
     super(
       'seoul-public-service',
-      'http://openapi.seoul.go.kr:8088',
+      process.env.SEOUL_OPENAPI_BASE_URL || SEOUL_BASE_URL,
       CrawlSchedule.DAILY,
     );
 

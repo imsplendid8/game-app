@@ -211,7 +211,7 @@ export class CrawlerService {
       bookingCloseAt: program.bookingCloseAt ?? undefined,
       bookingMethod: program.bookingMethod,
       capacity: program.capacity,
-      price: program.price ?? 0,
+      price: program.price ?? null,
       status: program.status,
       automationStatus: adapter.metadata.automationInfo?.isAutomatable
         ? 'AVAILABLE'
