@@ -3,13 +3,18 @@ import {
   Get,
   Post,
   Put,
+  Patch,
   Delete,
   Param,
   Body,
   Query,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { NotificationsService } from './notifications.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { CurrentUser } from '../auth/current-user.decorator';
+import { JwtPayload } from '../auth/auth.service';
 import {
   Notification,
   NotificationType,
@@ -42,6 +47,42 @@ export class NotificationsController {
       body.message,
       body.experienceRunId,
     );
+  }
+
+  @Get()
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get notifications for the current user' })
+  @ApiQuery({ name: 'includeRead', required: false, type: Boolean })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  async getMyNotifications(
+    @CurrentUser() user: JwtPayload,
+    @Query('includeRead') includeRead: boolean = false,
+    @Query('limit') limit: number = 50,
+  ): Promise<Notification[]> {
+    return this.notificationsService.getUserNotifications(
+      user.sub,
+      includeRead,
+      limit,
+    );
+  }
+
+  @Patch('read-all')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Mark all notifications as read for the current user' })
+  async markAllMineAsRead(@CurrentUser() user: JwtPayload): Promise<void> {
+    return this.notificationsService.markAllAsRead(user.sub);
+  }
+
+  @Patch(':notificationId/read')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Mark one of the current user notifications as read' })
+  async markMineAsRead(
+    @Param('notificationId') notificationId: string,
+  ): Promise<Notification> {
+    return this.notificationsService.markAsRead(notificationId);
   }
 
   @Get('user/:userId')

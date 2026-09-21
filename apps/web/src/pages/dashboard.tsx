@@ -11,6 +11,7 @@ interface Booking {
   confirmationNumber: string;
   status: string;
   createdAt: string;
+  experienceDate: string;
   selectedChildren: Array<{ id: string; name: string; age: number }>;
   totalPrice?: number;
   experience?: {
@@ -80,6 +81,7 @@ export default function DashboardPage() {
             confirmationNumber: 'BK-2026-001',
             status: 'CONFIRMED',
             createdAt: new Date().toISOString(),
+            experienceDate: new Date().toISOString(),
             selectedChildren: [{ id: '1', name: '김민준', age: 7 }],
             totalPrice: 50000,
             experience: {
@@ -93,6 +95,7 @@ export default function DashboardPage() {
             confirmationNumber: 'BK-2026-002',
             status: 'CONFIRMED',
             createdAt: new Date().toISOString(),
+            experienceDate: new Date().toISOString(),
             selectedChildren: [{ id: '1', name: '김민준', age: 7 }, { id: '2', name: '김은지', age: 5 }],
             totalPrice: 70000,
             experience: {
@@ -106,6 +109,7 @@ export default function DashboardPage() {
             confirmationNumber: 'BK-2026-003',
             status: 'PENDING',
             createdAt: new Date().toISOString(),
+            experienceDate: new Date().toISOString(),
             selectedChildren: [{ id: '1', name: '김민준', age: 7 }],
             totalPrice: 45000,
             experience: {
@@ -257,7 +261,7 @@ export default function DashboardPage() {
                         </span>
                       </div>
                       <p className="text-sm text-gray-600 mb-2">
-                        📅 {new Date(booking.createdAt).toLocaleDateString('ko-KR')}
+                        📅 {new Date(booking.experienceDate).toLocaleDateString('ko-KR')}
                       </p>
                       <p className="text-sm text-gray-600">
                         👥 {booking.selectedChildren.length}명 • 💰 {booking.totalPrice?.toLocaleString()}원

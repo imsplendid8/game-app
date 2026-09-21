@@ -4,7 +4,7 @@ import { ExperiencesService } from './experiences.service';
 import { CreateExperienceDto } from './dto/create-experience.dto';
 
 @ApiTags('Experiences')
-@Controller('experiences')
+@Controller('api/experiences')
 export class ExperiencesController {
   constructor(private readonly experiencesService: ExperiencesService) {}
 

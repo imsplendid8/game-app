@@ -119,7 +119,7 @@ export class BookingReminderService {
       const daysUntil = this.getDaysUntil(booking.experienceDate);
       const emailHtml = this.emailService.generateReminderEmail({
         programName: booking.experience?.programName || '프로그램',
-        institutionName: booking.experience?.institution?.name || '-',
+        institutionName: booking.experience?.institution?.institutionName || '-',
         experienceDate: booking.experienceDate.toISOString(),
         daysUntil,
         confirmationNumber: booking.confirmationNumber,
@@ -205,7 +205,7 @@ export class BookingReminderService {
 
       const emailHtml = this.emailService.generateBookingConfirmationEmail({
         programName: booking.experience?.programName || '프로그램',
-        institutionName: booking.experience?.institution?.name || '-',
+        institutionName: booking.experience?.institution?.institutionName || '-',
         experienceDate: booking.experienceDate.toISOString(),
         confirmationNumber: booking.confirmationNumber,
         childrenCount: booking.selectedChildren?.length || 0,

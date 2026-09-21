@@ -14,7 +14,7 @@ async function seedData() {
 
   // Create institutions
   const nationalMuseum = await institutionRepository.save({
-    name: '국립박물관',
+    institutionName: '국립박물관',
     description: '대한민국의 역사와 문화를 대표하는 박물관',
     websiteUrl: 'https://www.museum.go.kr',
     address: '서울시 종로구 세종로 82',
@@ -22,7 +22,7 @@ async function seedData() {
   });
 
   const seoulMilk = await institutionRepository.save({
-    name: '서울우유 목장',
+    institutionName: '서울우유 목장',
     description: '아이들을 위한 낙농 체험',
     websiteUrl: 'https://www.seoul-milk.com',
     address: '경기도 남양주시',
@@ -30,7 +30,7 @@ async function seedData() {
   });
 
   const scienceCenter = await institutionRepository.save({
-    name: '서울 과학관',
+    institutionName: '서울 과학관',
     description: '과학 교육과 체험 중심의 관',
     websiteUrl: 'https://www.science.or.kr',
     address: '서울시 영등포구 문제초로 60',

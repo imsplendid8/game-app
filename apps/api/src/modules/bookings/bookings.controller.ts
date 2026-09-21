@@ -4,10 +4,11 @@ import { BookingsService } from './bookings.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
+import { JwtPayload } from '../auth/auth.service';
 
 @ApiTags('Bookings')
 @ApiBearerAuth()
-@Controller('bookings')
+@Controller('api/bookings')
 @UseGuards(JwtAuthGuard)
 export class BookingsController {
   constructor(private readonly bookingsService: BookingsService) {}
@@ -15,23 +16,23 @@ export class BookingsController {
   @Post()
   @ApiOperation({ summary: 'Create a new booking' })
   async create(
-    @CurrentUser() user: any,
+    @CurrentUser() user: JwtPayload,
     @Body() createBookingDto: CreateBookingDto,
   ) {
-    return await this.bookingsService.create(user.id, createBookingDto);
+    return await this.bookingsService.create(user.sub, createBookingDto);
   }
 
   @Get('search')
   @ApiOperation({ summary: 'Search and filter bookings' })
   async search(
-    @CurrentUser() user: any,
+    @CurrentUser() user: JwtPayload,
     @Query('keyword') keyword?: string,
     @Query('dateFrom') dateFrom?: string,
     @Query('dateTo') dateTo?: string,
     @Query('status') status?: string,
     @Query('sort') sort?: 'newest' | 'oldest' | 'price_low' | 'price_high',
   ) {
-    return await this.bookingsService.search(user.id, {
+    return await this.bookingsService.search(user.sub, {
       keyword,
       dateFrom,
       dateTo,
@@ -42,31 +43,31 @@ export class BookingsController {
 
   @Get()
   @ApiOperation({ summary: 'Get user bookings' })
-  async findAll(@CurrentUser() user: any) {
-    return await this.bookingsService.findAll(user.id);
+  async findAll(@CurrentUser() user: JwtPayload) {
+    return await this.bookingsService.findAll(user.sub);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get booking by ID' })
-  async findOne(@Param('id') id: string, @CurrentUser() user: any) {
-    return await this.bookingsService.findOneByUser(user.id, id);
+  async findOne(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return await this.bookingsService.findOneByUser(user.sub, id);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update booking (e.g., reschedule date)' })
   async update(
     @Param('id') id: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: JwtPayload,
     @Body() updateData: any,
   ) {
-    await this.bookingsService.findOneByUser(user.id, id);
+    await this.bookingsService.findOneByUser(user.sub, id);
     return await this.bookingsService.update(id, updateData);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Cancel booking' })
-  async cancel(@Param('id') id: string, @CurrentUser() user: any) {
-    await this.bookingsService.findOneByUser(user.id, id);
+  async cancel(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    await this.bookingsService.findOneByUser(user.sub, id);
     return await this.bookingsService.cancel(id);
   }
 }

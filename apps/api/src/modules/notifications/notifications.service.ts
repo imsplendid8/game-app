@@ -41,14 +41,14 @@ export class NotificationsService {
   ): Promise<Notification[]> {
     const query = this.notificationsRepository
       .createQueryBuilder('n')
-      .where('n.user_id = :userId', { userId });
+      .where('n.userId = :userId', { userId });
 
     if (!includeRead) {
-      query.andWhere('n.is_read = false');
+      query.andWhere('n.isRead = false');
     }
 
     return query
-      .orderBy('n.created_at', 'DESC')
+      .orderBy('n.createdAt', 'DESC')
       .take(limit)
       .getMany();
   }

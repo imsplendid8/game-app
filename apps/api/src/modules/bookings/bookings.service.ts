@@ -97,7 +97,7 @@ export class BookingsService {
     // 키워드 검색 (프로그램명, 기관명)
     if (searchParams.keyword) {
       query = query.andWhere(
-        '(experience.programName ILIKE :keyword OR institution.name ILIKE :keyword)',
+        '(experience.programName ILIKE :keyword OR institution.institutionName ILIKE :keyword)',
         { keyword: `%${searchParams.keyword}%` },
       );
     }

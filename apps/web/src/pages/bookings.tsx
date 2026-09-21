@@ -261,7 +261,7 @@ export default function BookingsPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-gray-600 mb-4">
                         <div className="flex items-center gap-2">
                           <FiCalendar size={16} />
-                          {new Date(booking.createdAt).toLocaleDateString('ko-KR')}
+                          {new Date(booking.experienceDate).toLocaleDateString('ko-KR')}
                         </div>
                         <div className="flex items-center gap-2">
                           <FiUsers size={16} />
