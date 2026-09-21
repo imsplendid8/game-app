@@ -10,7 +10,7 @@ import * as path from 'path';
  */
 @Injectable()
 export class DataLoaderAdapter extends BaseAdapter {
-  private dataDir = path.join(process.cwd(), 'apps/api/src/crawler/data');
+  private dataDir = path.resolve(__dirname, '../data');
 
   constructor() {
     super('data-loader', 'file://', CrawlSchedule.DAILY);

@@ -12,9 +12,20 @@ import { FactoryTourAdapter } from './adapters/factory-tour.adapter';
 import { BroadcastingAdapter } from './adapters/broadcasting.adapter';
 import { CrawlHistory } from '@/modules/crawler/entities/crawl-history.entity';
 import { AdapterState } from '@/modules/crawler/entities/adapter-state.entity';
+import { Institution } from '@/modules/institutions/entities/institution.entity';
+import { Experience } from '@/modules/experiences/entities/experience.entity';
+import { ExperienceRun } from '@/modules/experience-runs/experience-runs.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([CrawlHistory, AdapterState])],
+  imports: [
+    TypeOrmModule.forFeature([
+      CrawlHistory,
+      AdapterState,
+      Institution,
+      Experience,
+      ExperienceRun,
+    ]),
+  ],
   providers: [
     CrawlerService,
     CrawlMonitoringService,
