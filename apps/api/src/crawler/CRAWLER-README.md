@@ -140,39 +140,44 @@ ISO 8601 형식을 사용합니다:
 
 많은 정부 기관과 공공 서비스에서 OpenAPI를 제공합니다.
 
-#### 예: 서울시 공공서비스 API
+#### 예: 서울 열린데이터광장 공공서비스예약 API
 
-```typescript
-// apps/api/src/crawler/adapters/seoul-public-service.adapter.ts
+구현: `apps/api/src/crawler/adapters/seoul-public-service.adapter.ts`
 
-export class SeoulPublicServiceAdapter extends BaseAdapter {
-  async fetchPrograms(): Promise<ExperienceData[]> {
-    const apiKey = process.env.SEOUL_API_KEY;
-    
-    const response = await this.http.get('/familyProgram', {
-      params: {
-        apikey: apiKey,
-        pageNo: 1,
-        pageSize: 100,
-      },
-    });
-    
-    // API 응답 → ExperienceData로 변환
-    return response.data.result.row.map(p => this.mapProgram(p));
+두 개의 서비스를 조회한다.
+- `ListPublicReservationEducation` (교육체험)
+- `ListPublicReservationCulture` (문화행사)
+
+요청 형식은 경로에 인증키를 넣는 방식이다.
+
+```
+GET http://openapi.seoul.go.kr:8088/{KEY}/json/{SERVICE}/{시작}/{끝}/
+```
+
+응답은 서비스명을 키로 갖는다.
+
+```json
+{
+  "ListPublicReservationEducation": {
+    "list_total_count": 1234,
+    "RESULT": { "CODE": "INFO-000", "MESSAGE": "정상 처리되었습니다" },
+    "row": [{ "SVCID": "...", "SVCNM": "...", "PLACENM": "...", "SVCSTATNM": "접수중" }]
   }
 }
 ```
 
+`list_total_count`를 보고 1000건 단위로 끝까지 페이지를 넘긴다.
+
 **설정**:
-1. API 키 신청 (서울시 공공데이터 포털)
+1. https://data.seoul.go.kr 로그인 > "인증키 신청" > 일반 인증키 (무료, 즉시 발급)
 2. `.env` 파일에 추가:
    ```env
-   SEOUL_API_KEY=your-api-key-here
+   SEOUL_OPENAPI_KEY=발급받은-키
    ```
-3. Adapter 활성화:
-   ```typescript
-   this.metadata.enabled = true;
-   ```
+3. 키가 비어 있으면 어댑터는 경고만 남기고 건너뛴다. 별도 활성화 작업은 필요 없다.
+
+응답 필드명이 바뀌어 매핑이 0건이 되면, 받은 행의 실제 필드명을 경고 로그로
+남기므로 로그를 보고 매핑을 고치면 된다.
 
 ### 방법 2: 웹 스크래핑
 
