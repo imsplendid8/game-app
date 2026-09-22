@@ -42,3 +42,6 @@ Thumbs.db
 .turbo/
 screenshots/
 screenshot*.js
+
+# Redis 로컬 실행 시 생기는 스냅샷
+dump.rdb
