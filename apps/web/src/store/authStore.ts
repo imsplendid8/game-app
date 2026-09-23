@@ -84,26 +84,7 @@ export const useAuthStore = create<AuthState>((set, _get) => ({
           set({ isLoading: false });
         }
       } else {
-        // Auto-login with demo user for testing
-        const demoUser: User = {
-          id: 'demo-user-001',
-          email: 'demo@withdkis.com',
-          profileName: '데모 사용자',
-          childrenAges: [5, 8, 10],
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        const demoToken = 'demo-token-' + Math.random().toString(36).substring(7);
-        localStorage.setItem('accessToken', demoToken);
-        localStorage.setItem('refreshToken', demoToken);
-        localStorage.setItem('user', JSON.stringify(demoUser));
-        set({
-          user: demoUser,
-          accessToken: demoToken,
-          refreshToken: demoToken,
-          isAuthenticated: true,
-          isLoading: false,
-        });
+        set({ isLoading: false });
       }
     }
   },

@@ -2,7 +2,15 @@ import { z } from 'zod';
 
 const envSchema = z.object({
   // Public variables
-  NEXT_PUBLIC_API_URL: z.string().url('Invalid API URL'),
+  // 기본값은 같은 오리진의 /api. next.config.js의 rewrite가 API 서버로 넘긴다.
+  // 절대 URL을 넣으면 그 주소로 직접 호출한다(별도 도메인에 API를 둘 때).
+  NEXT_PUBLIC_API_URL: z
+    .string()
+    .refine(
+      (value) => value.startsWith('/') || URL.canParse(value),
+      'Invalid API URL: 상대 경로(/api)이거나 절대 URL이어야 합니다',
+    )
+    .default('/api'),
   NEXT_PUBLIC_SENTRY_DSN: z.string().url('Invalid Sentry DSN').optional(),
   NEXT_PUBLIC_GA_ID: z.string().optional(),
 

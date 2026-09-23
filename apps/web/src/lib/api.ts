@@ -1,6 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+// 같은 오리진의 /api 로 보내면 next.config.js의 rewrite가 API 서버로 넘긴다.
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 class ApiClient {
   private client: AxiosInstance;
