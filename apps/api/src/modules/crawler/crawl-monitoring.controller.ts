@@ -1,10 +1,13 @@
-import { Controller, Get, Param, Query, Patch } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { Controller, Get, Param, Query, Patch, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CrawlMonitoringService } from './crawl-monitoring.service';
 import { CrawlHistory } from './entities/crawl-history.entity';
 import { AdapterState } from './entities/adapter-state.entity';
 
 @ApiTags('Crawler Monitoring')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('api/crawler-monitoring')
 export class CrawlMonitoringController {
   constructor(private crawlMonitoringService: CrawlMonitoringService) {}

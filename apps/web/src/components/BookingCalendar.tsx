@@ -76,7 +76,12 @@ export function BookingCalendar({ bookings, onBookingUpdate }: BookingCalendarPr
       setIsUpdating(true);
       setError(null);
 
-      const formattedDate = newDate.toISOString().split('T')[0];
+      // toISOString()은 UTC로 바꿔 KST 자정을 전날로 만든다. 로컬 날짜로 포맷한다.
+      const formattedDate = [
+        newDate.getFullYear(),
+        String(newDate.getMonth() + 1).padStart(2, '0'),
+        String(newDate.getDate()).padStart(2, '0'),
+      ].join('-');
 
       await apiClient.updateBooking(bookingId, {
         experienceDate: formattedDate,

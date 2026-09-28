@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Param, Put, Delete, Query, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ExperiencesService } from './experiences.service';
 import { CreateExperienceDto } from './dto/create-experience.dto';
 
@@ -9,6 +10,8 @@ export class ExperiencesController {
   constructor(private readonly experiencesService: ExperiencesService) {}
 
   @Post()
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Create a new experience program' })
   async create(@Body() createExperienceDto: CreateExperienceDto) {
     return await this.experiencesService.create(createExperienceDto);
@@ -51,12 +54,16 @@ export class ExperiencesController {
   }
 
   @Put(':id')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Update experience program' })
   async update(@Param('id') id: string, @Body() data: any) {
     return await this.experiencesService.update(id, data);
   }
 
   @Delete(':id')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Delete experience program (soft delete)' })
   async remove(@Param('id') id: string) {
     return await this.experiencesService.remove(id);

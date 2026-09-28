@@ -1,7 +1,19 @@
-import { Controller, Get, Post, Body, Param, Delete, Patch, UseGuards, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  Patch,
+  UseGuards,
+  Query,
+  BadRequestException,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { BookingsService } from './bookings.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
+import { Booking } from './entities/booking.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { JwtPayload } from '../auth/auth.service';
@@ -58,10 +70,26 @@ export class BookingsController {
   async update(
     @Param('id') id: string,
     @CurrentUser() user: JwtPayload,
-    @Body() updateData: any,
+    @Body() updateData: { experienceDate?: string; specialRequests?: string },
   ) {
     await this.bookingsService.findOneByUser(user.sub, id);
-    return await this.bookingsService.update(id, updateData);
+
+    // 사용자가 바꿀 수 있는 필드만 통과시킨다. 본문을 그대로 넘기면
+    // userId/status/totalPrice 등을 임의로 바꿀 수 있다.
+    const changes: Partial<Booking> = {};
+    if (updateData?.experienceDate !== undefined) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(String(updateData.experienceDate))) {
+        throw new BadRequestException('experienceDate must be YYYY-MM-DD');
+      }
+      changes.experienceDate = updateData.experienceDate as unknown as Date;
+    }
+    if (updateData?.specialRequests !== undefined) {
+      changes.specialRequests = String(updateData.specialRequests);
+    }
+    if (Object.keys(changes).length === 0) {
+      throw new BadRequestException('No updatable fields provided');
+    }
+    return await this.bookingsService.update(id, changes);
   }
 
   @Delete(':id')

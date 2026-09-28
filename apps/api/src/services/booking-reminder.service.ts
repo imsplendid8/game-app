@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Booking, BookingStatus } from '../modules/bookings/entities/booking.entity';
 import {
   BookingReminder,
@@ -52,39 +52,46 @@ export class BookingReminderService {
     daysAhead: number,
     reminderType: ReminderType,
   ) {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // 크론은 Asia/Seoul 기준으로 돌지만 컨테이너는 UTC이므로,
+    // 날짜 계산도 반드시 KST 달력 날짜로 한다.
+    const targetDate = this.addDays(this.todayInSeoul(), daysAhead);
 
-    const targetDate = new Date(today);
-    targetDate.setDate(targetDate.getDate() + daysAhead);
+    this.logger.log(`${daysAhead}일 후 알림 처리: ${targetDate}`);
 
-    const nextDate = new Date(targetDate);
-    nextDate.setDate(nextDate.getDate() + 1);
-
-    this.logger.log(
-      `${daysAhead}일 후 알림 처리: ${targetDate.toDateString()}`,
-    );
-
-    // 해당 날짜의 예약 찾기
+    // experienceDate는 date 컬럼이므로 'YYYY-MM-DD' 문자열로 정확히 비교한다.
     const bookings = await this.bookingsRepository.find({
       where: {
-        experienceDate: MoreThanOrEqual(targetDate),
+        experienceDate: targetDate as unknown as Date,
         status: BookingStatus.CONFIRMED,
       },
       relations: ['experience', 'experience.institution', 'user'],
     });
 
     for (const booking of bookings) {
-      const experienceDate = new Date(booking.experienceDate);
-
-      if (
-        experienceDate.getFullYear() === targetDate.getFullYear() &&
-        experienceDate.getMonth() === targetDate.getMonth() &&
-        experienceDate.getDate() === targetDate.getDate()
-      ) {
-        await this.sendReminder(booking, reminderType);
-      }
+      await this.sendReminder(booking, reminderType);
     }
+  }
+
+  /** 서울 기준 오늘 날짜 (YYYY-MM-DD) */
+  private todayInSeoul(): string {
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Seoul',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(new Date());
+  }
+
+  private addDays(ymd: string, days: number): string {
+    const date = new Date(`${ymd}T00:00:00Z`);
+    date.setUTCDate(date.getUTCDate() + days);
+    return date.toISOString().slice(0, 10);
+  }
+
+  /** date 컬럼은 드라이버에 따라 문자열 또는 Date로 온다. 항상 YYYY-MM-DD로 맞춘다. */
+  private toYmd(value: Date | string): string {
+    if (typeof value === 'string') return value.slice(0, 10);
+    return new Date(value).toISOString().slice(0, 10);
   }
 
   private async sendReminder(booking: Booking, reminderType: ReminderType) {
@@ -120,7 +127,7 @@ export class BookingReminderService {
       const emailHtml = this.emailService.generateReminderEmail({
         programName: booking.experience?.programName || '프로그램',
         institutionName: booking.experience?.institution?.institutionName || '-',
-        experienceDate: booking.experienceDate.toISOString(),
+        experienceDate: this.toYmd(booking.experienceDate),
         daysUntil,
         confirmationNumber: booking.confirmationNumber,
       });
@@ -164,17 +171,10 @@ export class BookingReminderService {
     }
   }
 
-  private getDaysUntil(experienceDate: Date): number {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const expDate = new Date(experienceDate);
-    expDate.setHours(0, 0, 0, 0);
-
-    const diffTime = expDate.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    return diffDays;
+  private getDaysUntil(experienceDate: Date | string): number {
+    const exp = Date.parse(`${this.toYmd(experienceDate)}T00:00:00Z`);
+    const today = Date.parse(`${this.todayInSeoul()}T00:00:00Z`);
+    return Math.round((exp - today) / (1000 * 60 * 60 * 24));
   }
 
   // 수동 알림 트리거 (테스트용)
@@ -206,7 +206,7 @@ export class BookingReminderService {
       const emailHtml = this.emailService.generateBookingConfirmationEmail({
         programName: booking.experience?.programName || '프로그램',
         institutionName: booking.experience?.institution?.institutionName || '-',
-        experienceDate: booking.experienceDate.toISOString(),
+        experienceDate: this.toYmd(booking.experienceDate),
         confirmationNumber: booking.confirmationNumber,
         childrenCount: booking.selectedChildren?.length || 0,
       });

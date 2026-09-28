@@ -71,7 +71,7 @@ export class AuthService {
   async refreshAccessToken(refreshToken: string): Promise<AuthToken> {
     try {
       const payload = await this.jwtService.verifyAsync(refreshToken, {
-        secret: process.env.JWT_REFRESH_SECRET || 'refresh-secret',
+        secret: this.getRefreshSecret(),
       });
 
       const user = await this.usersService.getUserById(payload.sub);
@@ -137,7 +137,7 @@ export class AuthService {
     const accessToken = this.jwtService.sign(payload);
 
     const refreshToken = this.jwtService.sign(payload, {
-      secret: process.env.JWT_REFRESH_SECRET || 'refresh-secret',
+      secret: this.getRefreshSecret(),
       expiresIn: '7d',
     });
 
@@ -146,6 +146,15 @@ export class AuthService {
       refreshToken,
       expiresIn: 86400,
     };
+  }
+
+  // 별도 시크릿이 없으면 JWT_SECRET에서 파생한다(액세스 토큰과는 다른 값).
+  // 소스에 박힌 고정값을 쓰면 누구나 리프레시 토큰을 위조할 수 있다.
+  private getRefreshSecret(): string {
+    if (process.env.JWT_REFRESH_SECRET) {
+      return process.env.JWT_REFRESH_SECRET;
+    }
+    return `${process.env.JWT_SECRET || 'your-secret-key'}:refresh`;
   }
 
   private async hashPassword(password: string): Promise<string> {

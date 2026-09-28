@@ -58,6 +58,9 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3001
+      # 마이그레이션(snake_case)이 엔티티와 맞지 않고 bookings/reviews 테이블도 없어서,
+      # 스키마는 엔티티 기준으로 동기화한다. 끄려면 .env에 DB_SYNCHRONIZE=false.
+      DB_SYNCHRONIZE: ${DB_SYNCHRONIZE:-true}
       DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/withdkis_dev
       REDIS_HOST: redis
       REDIS_PORT: 6379

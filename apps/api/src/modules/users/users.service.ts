@@ -136,14 +136,14 @@ export class UsersService {
   ): Promise<UserBookmark[]> {
     const query = this.bookmarksRepository
       .createQueryBuilder('b')
-      .where('b.user_id = :userId', { userId })
+      .where('b.userId = :userId', { userId })
       .leftJoinAndSelect('b.experienceRun', 'run');
 
     if (bookmarkType) {
-      query.andWhere('b.bookmark_type = :bookmarkType', { bookmarkType });
+      query.andWhere('b.bookmarkType = :bookmarkType', { bookmarkType });
     }
 
-    return query.orderBy('b.created_at', 'DESC').getMany();
+    return query.orderBy('b.createdAt', 'DESC').getMany();
   }
 
   async getAllUsers(limit: number = 100): Promise<User[]> {

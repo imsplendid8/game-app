@@ -1,10 +1,11 @@
-import { IsUUID, IsArray, IsString, IsOptional, IsInt, Min } from 'class-validator';
+import { IsUUID, IsArray, ArrayMinSize, IsString, IsOptional, IsInt, Min } from 'class-validator';
 
 export class CreateBookingDto {
   @IsUUID()
   experienceId: string;
 
   @IsArray()
+  @ArrayMinSize(1)
   selectedChildren: Array<{ id: string; name: string; age: number }>;
 
   @IsString()

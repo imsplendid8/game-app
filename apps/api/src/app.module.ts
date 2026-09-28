@@ -23,6 +23,11 @@ import { Booking } from '@/modules/bookings/entities/booking.entity';
 import { BookingReminder } from '@/modules/bookings/entities/booking-reminder.entity';
 import { User } from '@/modules/users/entities/user.entity';
 
+// 프로덕션에서는 기본적으로 끄되, 마이그레이션이 엔티티와 맞지 않는 동안에는
+// DB_SYNCHRONIZE=true 로 엔티티 기준 스키마를 만들 수 있게 한다.
+const shouldSynchronize = () =>
+  process.env.DB_SYNCHRONIZE === 'true' || process.env.NODE_ENV !== 'production';
+
 const getTypeOrmConfig = () => {
   const useSqlite = process.env.USE_SQLITE === 'true' || process.env.DATABASE_URL?.includes('sqlite');
 
@@ -30,7 +35,7 @@ const getTypeOrmConfig = () => {
     return {
       type: 'sqlite' as const,
       database: process.env.DATABASE_URL?.replace('sqlite:', '') || '/home/user/game-app/withdkis_dev.db',
-      synchronize: process.env.NODE_ENV !== 'production',
+      synchronize: shouldSynchronize(),
       logging: process.env.NODE_ENV === 'development',
       autoLoadEntities: true,
     };
@@ -39,7 +44,7 @@ const getTypeOrmConfig = () => {
   return {
     type: 'postgres' as const,
     url: process.env.DATABASE_URL || 'postgresql://postgres:password@localhost:5432/withdkis_dev',
-    synchronize: process.env.NODE_ENV !== 'production',
+    synchronize: shouldSynchronize(),
     logging: process.env.NODE_ENV === 'development',
     autoLoadEntities: true,
   };

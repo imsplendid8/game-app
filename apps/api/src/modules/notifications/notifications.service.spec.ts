@@ -15,6 +15,7 @@ describe('NotificationsService', () => {
       find: jest.fn(),
       count: jest.fn(),
       delete: jest.fn(),
+      update: jest.fn(),
       createQueryBuilder: jest.fn(),
     };
 
@@ -154,19 +155,14 @@ describe('NotificationsService', () => {
 
   describe('markAllAsRead', () => {
     it('should mark all notifications as read for a user', async () => {
-      mockNotificationRepository.find.mockResolvedValue([
-        { id: 'notification-1', userId: 'user-1', isRead: false },
-        { id: 'notification-2', userId: 'user-1', isRead: false },
-      ]);
-
-      mockNotificationRepository.save.mockResolvedValue({});
+      mockNotificationRepository.update.mockResolvedValue({ affected: 2 });
 
       await service.markAllAsRead('user-1');
 
-      expect(mockNotificationRepository.find).toHaveBeenCalledWith({
-        where: { userId: 'user-1', isRead: false },
-      });
-      expect(mockNotificationRepository.save).toHaveBeenCalled();
+      expect(mockNotificationRepository.update).toHaveBeenCalledWith(
+        { userId: 'user-1', isRead: false },
+        expect.objectContaining({ isRead: true }),
+      );
     });
   });
 
@@ -281,18 +277,14 @@ describe('NotificationsService', () => {
 
   describe('deleteOldNotifications', () => {
     it('should delete old read notifications older than specified days', async () => {
-      const mockQueryBuilder: any = {
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        delete: jest.fn().mockReturnThis(),
-        execute: jest.fn().mockResolvedValue({ affected: 10 }),
-      };
-
-      mockNotificationRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+      mockNotificationRepository.delete.mockResolvedValue({ affected: 10 });
 
       const result = await service.deleteOldNotifications(30);
 
       expect(result).toBe(10);
+      const where = mockNotificationRepository.delete.mock.calls[0][0];
+      expect(where.isRead).toBe(true);
+      expect(where.createdAt.type).toBe('lessThan');
     });
   });
 
