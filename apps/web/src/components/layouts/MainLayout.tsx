@@ -2,6 +2,7 @@ import React, { ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useAuthStore } from '@/store/authStore';
+import { apiClient } from '@/lib/api';
 import { FiMenu, FiX, FiBell, FiLogOut } from 'react-icons/fi';
 
 interface MainLayoutProps {
@@ -10,8 +11,26 @@ interface MainLayoutProps {
 
 export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const router = useRouter();
-  const { logout } = useAuthStore();
+  const { logout, isAuthenticated } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const [unreadCount, setUnreadCount] = React.useState(0);
+
+  // 페이지를 옮길 때마다 새로 센다. 알림 화면에서 읽음 처리한 뒤 돌아오면 줄어든다.
+  React.useEffect(() => {
+    if (!isAuthenticated) return;
+    let cancelled = false;
+    apiClient
+      .getNotifications()
+      .then((list) => {
+        if (!cancelled) setUnreadCount(Array.isArray(list) ? list.length : 0);
+      })
+      .catch(() => {
+        if (!cancelled) setUnreadCount(0);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, router.asPath]);
 
   const handleLogout = () => {
     logout();
@@ -65,9 +84,11 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 title="알림"
               >
                 <FiBell size={20} />
-                <span className="absolute top-1 right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold text-white bg-red-500 rounded-full">
-                  3
-                </span>
+                {unreadCount > 0 && (
+                  <span className="absolute top-1 right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold text-white bg-red-500 rounded-full">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
               </button>
 
               {/* Mobile menu button */}

@@ -4,7 +4,6 @@ import { Repository } from 'typeorm';
 import { Institution } from '@/modules/institutions/entities/institution.entity';
 import { Experience } from '@/modules/experiences/entities/experience.entity';
 import { ExperienceRun } from '@/modules/experience-runs/experience-runs.entity';
-import { MockAdapter } from './adapters/mock.adapter';
 import { DataLoaderAdapter } from './adapters/data-loader.adapter';
 import { SeoulPublicServiceAdapter } from './adapters/seoul-public-service.adapter';
 import { MuseumAdapter } from './adapters/museum.adapter';
@@ -19,7 +18,6 @@ export class CrawlerService {
   private adapters: Map<string, Adapter> = new Map();
 
   constructor(
-    mockAdapter: MockAdapter,
     dataLoaderAdapter: DataLoaderAdapter,
     seoulAdapter: SeoulPublicServiceAdapter,
     museumAdapter: MuseumAdapter,
@@ -33,7 +31,6 @@ export class CrawlerService {
     @InjectRepository(ExperienceRun)
     private experienceRunsRepository: Repository<ExperienceRun>,
   ) {
-    this.registerAdapter(mockAdapter);
     this.registerAdapter(dataLoaderAdapter);
     this.registerAdapter(seoulAdapter);
     this.registerAdapter(museumAdapter);

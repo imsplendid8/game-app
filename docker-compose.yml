@@ -58,6 +58,9 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3001
+      # 서울 오픈API의 접수 시각은 시간대 표기가 없는 한국 시간이다.
+      # 컨테이너가 UTC면 9시간 어긋나게 저장·표시된다.
+      TZ: Asia/Seoul
       # 마이그레이션(snake_case)이 엔티티와 맞지 않고 bookings/reviews 테이블도 없어서,
       # 스키마는 엔티티 기준으로 동기화한다. 끄려면 .env에 DB_SYNCHRONIZE=false.
       DB_SYNCHRONIZE: ${DB_SYNCHRONIZE:-true}

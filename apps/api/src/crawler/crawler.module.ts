@@ -3,7 +3,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CrawlerService } from './crawler.service';
 import { CrawlMonitoringService } from '@/modules/crawler/crawl-monitoring.service';
 import { CrawlMonitoringController } from '@/modules/crawler/crawl-monitoring.controller';
-import { MockAdapter } from './adapters/mock.adapter';
 import { DataLoaderAdapter } from './adapters/data-loader.adapter';
 import { SeoulPublicServiceAdapter } from './adapters/seoul-public-service.adapter';
 import { MuseumAdapter } from './adapters/museum.adapter';
@@ -29,7 +28,6 @@ import { ExperienceRun } from '@/modules/experience-runs/experience-runs.entity'
   providers: [
     CrawlerService,
     CrawlMonitoringService,
-    MockAdapter,
     DataLoaderAdapter,
     SeoulPublicServiceAdapter,
     MuseumAdapter,

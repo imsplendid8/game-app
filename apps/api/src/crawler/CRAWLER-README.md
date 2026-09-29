@@ -502,7 +502,7 @@ docker compose logs -f api | grep "Crawler\|Crawl\|adapter"
 
 - [Adapter Interface](./adapter.interface.ts)
 - [BaseAdapter 구현](./adapters/base.adapter.ts)
-- [MockAdapter 예제](./adapters/mock.adapter.ts)
+- [서울 공공서비스예약 어댑터 예제](./adapters/seoul-public-service.adapter.ts)
 - [DataLoader 예제](./adapters/data-loader.adapter.ts)
 - [크롤러 가이드](../../CRAWLER-GUIDE.md)
 

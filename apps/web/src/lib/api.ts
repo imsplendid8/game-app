@@ -60,6 +60,12 @@ class ApiClient {
     return response.data;
   }
 
+  /** 이름·자녀 나이까지 포함한 로그인 사용자 정보 */
+  async getMe() {
+    const response = await this.client.get('/users/me');
+    return response.data;
+  }
+
   async getCurrentUser() {
     const response = await this.client.get('/auth/me');
     return response.data;
@@ -116,6 +122,11 @@ class ApiClient {
     return response.data;
   }
 
+  async getBookingSchedule(days = 14) {
+    const response = await this.client.get('/experiences/booking-schedule', { params: { days } });
+    return response.data;
+  }
+
   async getExperienceById(id: string) {
     const response = await this.client.get(`/experiences/${id}`);
     return response.data;
@@ -124,6 +135,7 @@ class ApiClient {
   // Booking endpoints
   async createBooking(data: {
     experienceId: string;
+    experienceDate: string;
     selectedChildren: Array<{ id: string; name: string; age: number }>;
     specialRequests?: string;
     totalPrice?: number;

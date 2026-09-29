@@ -24,7 +24,8 @@ export class BookingsService {
       numberOfParticipants: createBookingDto.selectedChildren.length,
       confirmationNumber,
       status: BookingStatus.CONFIRMED,
-      experienceDate: new Date(),
+      // date 컬럼이라 문자열 그대로 저장해야 시간대 변환으로 날짜가 밀리지 않는다.
+      experienceDate: createBookingDto.experienceDate as unknown as Date,
     });
 
     return await this.bookingsRepository.save(booking);

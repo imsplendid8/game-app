@@ -21,6 +21,7 @@ export default function BookingCreatePage() {
   const [step, setStep] = useState<'details' | 'confirm' | 'success'>('details');
   const [experience, setExperience] = useState<Experience | null>(null);
   const [formData, setFormData] = useState({
+    experienceDate: '',
     selectedChildren: [] as { id: string; name: string; age: number }[],
     specialRequests: '',
   });
@@ -94,6 +95,11 @@ export default function BookingCreatePage() {
       setIsSubmitting(true);
       setError(null);
 
+      if (!formData.experienceDate) {
+        setError('체험 날짜를 선택해주세요.');
+        return;
+      }
+
       if (formData.selectedChildren.length === 0) {
         setError('최소 1명 이상의 자녀 정보를 입력해주세요.');
         return;
@@ -106,6 +112,7 @@ export default function BookingCreatePage() {
 
       const booking = await apiClient.createBooking({
         experienceId: experienceId as string,
+        experienceDate: formData.experienceDate,
         selectedChildren: formData.selectedChildren,
         specialRequests: formData.specialRequests,
         totalPrice: (experience?.price || 0) * formData.selectedChildren.length,
@@ -179,6 +186,21 @@ export default function BookingCreatePage() {
                   <p className="text-gray-600">가격: {experience.price.toLocaleString()}원</p>
                 )}
               </div>
+            </div>
+
+            {/* Experience Date */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <label htmlFor="experienceDate" className="block text-lg font-bold text-gray-900 mb-4">
+                체험 날짜
+              </label>
+              <input
+                id="experienceDate"
+                type="date"
+                required
+                value={formData.experienceDate}
+                onChange={(e) => setFormData((prev) => ({ ...prev, experienceDate: e.target.value }))}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+              />
             </div>
 
             {/* Children Input */}

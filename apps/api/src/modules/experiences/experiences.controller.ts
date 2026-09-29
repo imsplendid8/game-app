@@ -41,6 +41,15 @@ export class ExperiencesController {
     });
   }
 
+  // ':id'보다 먼저 선언해야 'booking-schedule'이 id로 잡히지 않는다.
+  @Get('booking-schedule')
+  @ApiOperation({ summary: '접수 중이거나 곧 접수가 시작되는 회차' })
+  async getBookingSchedule(@Query('days') days?: string) {
+    const parsed = Number(days);
+    const window = Number.isFinite(parsed) && parsed > 0 ? Math.min(parsed, 60) : 14;
+    return await this.experiencesService.getBookingSchedule(window);
+  }
+
   @Get()
   @ApiOperation({ summary: 'Get all active experience programs' })
   async findAll() {

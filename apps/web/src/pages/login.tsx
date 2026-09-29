@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import { useAuthStore } from '@/store/authStore';
+import { useAuthStore, type User } from '@/store/authStore';
 import { apiClient } from '@/lib/api';
 
 export default function LoginPage() {
@@ -19,7 +19,12 @@ export default function LoginPage() {
 
     try {
       const response = await apiClient.login(email, password);
-      login(response, response.accessToken, response.refreshToken);
+      // 로그인 응답은 userId/email만 준다. 나머지는 _app에서 /users/me로 채운다.
+      login(
+        { id: response.userId, email: response.email } as User,
+        response.accessToken,
+        response.refreshToken,
+      );
       router.push('/dashboard');
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
