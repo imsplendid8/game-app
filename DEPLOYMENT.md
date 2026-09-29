@@ -66,19 +66,34 @@ npm run format --workspaces
 
 ### 테스트 실행
 
+테스트는 두 종류다.
+
+| 명령 | 내용 | 필요한 것 |
+|---|---|---|
+| `npm test` | API·웹 단위 테스트 (약 10초) | 없음 |
+| `npm run test:e2e` | 실제 DB로 앱을 띄워 HTTP 요청까지 확인 | Postgres, Redis |
+
 ```bash
-# 모든 테스트 실행
-npm run test --workspaces
+# 단위 테스트 (인프라 없이)
+npm test
 
-# 웹 앱 테스트만
-npm run test --workspace=apps/web
+# 통합 테스트: DB·Redis를 먼저 띄운다
+docker compose up -d postgres redis
+npm run test:e2e
 
-# 감시 모드
-npm run test:watch --workspace=apps/web
+# 한쪽만
+npm test --workspace=apps/api
+npm test --workspace=apps/web
 
-# 커버리지 리포트
-npm run test:coverage --workspace=apps/web
+# 커밋 전에 CI와 같은 순서로
+npm run type-check && npm run lint && npm test && npm run build
 ```
+
+통합 테스트는 Postgres·Redis에 닿지 않으면 멈추지 않고, 무엇을 띄워야 하는지
+알려주며 바로 실패한다. 테스트가 만든 계정·예약은 끝나면 지운다.
+
+CI(GitHub Actions)는 푸시할 때마다 위 단계를 모두 돌리고, 통합 테스트도
+Postgres·Redis 컨테이너를 띄워 실행한다.
 
 ### 테스트 작성 가이드
 

@@ -112,7 +112,7 @@ export class UsersController {
     @CurrentUser() current: JwtPayload,
     @Body() updates: Partial<UserPreferences>,
   ): Promise<UserPreferences> {
-    const { id: _id, userId: _userId, user: _user, ...safeUpdates } = updates as any;
+    const { id: _id, userId: _userId, user: _user, ...safeUpdates } = updates;
     return this.usersService.updateUserPreferences(current.sub, safeUpdates);
   }
 
@@ -166,7 +166,7 @@ export class UsersController {
     @Body() updates: Partial<UserPreferences>,
   ): Promise<UserPreferences> {
     assertSelf(current, userId);
-    const { id: _id, userId: _userId, user: _user, ...safeUpdates } = updates as any;
+    const { id: _id, userId: _userId, user: _user, ...safeUpdates } = updates;
     return this.usersService.updateUserPreferences(userId, safeUpdates);
   }
 

@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { Calendar, dayjsLocalizer, View, SlotInfo } from 'react-big-calendar';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { apiClient } from '@/lib/api';
+import { parseYmd, toLocalYmd } from '@/lib/bookingDates';
 import { FiX } from 'react-icons/fi';
 import utc from 'dayjs/plugin/utc';
 import dayjs from 'dayjs';
@@ -45,7 +46,7 @@ export function BookingCalendar({ bookings, onBookingUpdate }: BookingCalendarPr
   const [error, setError] = useState<string | null>(null);
 
   const events: CalendarEvent[] = bookings.map((booking) => {
-    const experienceDate = new Date(booking.experienceDate);
+    const experienceDate = parseYmd(booking.experienceDate);
     return {
       id: booking.id,
       title: booking.experience?.programName || '프로그램',
@@ -76,12 +77,7 @@ export function BookingCalendar({ bookings, onBookingUpdate }: BookingCalendarPr
       setIsUpdating(true);
       setError(null);
 
-      // toISOString()은 UTC로 바꿔 KST 자정을 전날로 만든다. 로컬 날짜로 포맷한다.
-      const formattedDate = [
-        newDate.getFullYear(),
-        String(newDate.getMonth() + 1).padStart(2, '0'),
-        String(newDate.getDate()).padStart(2, '0'),
-      ].join('-');
+      const formattedDate = toLocalYmd(newDate);
 
       await apiClient.updateBooking(bookingId, {
         experienceDate: formattedDate,

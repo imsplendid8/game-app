@@ -3,7 +3,6 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bull';
 import { ScheduleModule } from '@nestjs/schedule';
-import { dataSource } from '@/database/data-source';
 import { HealthModule } from '@/modules/health/health.module';
 import { InstitutionsModule } from '@/modules/institutions/institutions.module';
 import { ExperiencesModule } from '@/modules/experiences/experiences.module';

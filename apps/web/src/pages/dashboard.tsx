@@ -6,6 +6,14 @@ import { useBookmarkStore } from '@/store/bookmarkStore';
 import { apiClient } from '@/lib/api';
 import { MainLayout } from '@/components/layouts/MainLayout';
 import {
+  dDayLabel,
+  daysFromToday,
+  formatMonthDay,
+  formatTime,
+  selectUpcoming,
+  sumMonthSpend,
+} from '@/lib/bookingDates';
+import {
   FiCalendar,
   FiBell,
   FiBookmark,
@@ -40,36 +48,6 @@ interface ScheduleRun {
     bookingUrl?: string | null;
     institution?: { institutionName: string };
   };
-}
-
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
-
-// experienceDate는 'YYYY-MM-DD' 문자열이다. new Date(문자열)은 UTC로 해석해
-// 한국에서는 전날 오전 9시가 되므로, 로컬 날짜로 직접 만든다.
-function parseYmd(ymd: string): Date {
-  const [year, month, day] = ymd.slice(0, 10).split('-').map(Number);
-  return new Date(year, month - 1, day);
-}
-
-function daysFromToday(date: Date): number {
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const target = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  return Math.round((target.getTime() - today.getTime()) / (24 * 60 * 60 * 1000));
-}
-
-function dDayLabel(days: number): string {
-  if (days === 0) return '오늘';
-  if (days === 1) return '내일';
-  return `D-${days}`;
-}
-
-function formatMonthDay(date: Date): string {
-  return `${date.getMonth() + 1}월 ${date.getDate()}일 (${WEEKDAYS[date.getDay()]})`;
-}
-
-function formatTime(date: Date): string {
-  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 }
 
 function childNames(booking: Booking): string {
@@ -133,26 +111,8 @@ export default function DashboardPage() {
     load();
   }, [isAuthenticated, hydrateBookmarks]);
 
-  const upcoming = useMemo(
-    () =>
-      bookings
-        .filter((b) => b.status === 'PENDING' || b.status === 'CONFIRMED')
-        .map((b) => ({ booking: b, date: parseYmd(b.experienceDate) }))
-        .filter(({ date }) => daysFromToday(date) >= 0)
-        .sort((a, b) => a.date.getTime() - b.date.getTime()),
-    [bookings],
-  );
-
-  const monthSpend = useMemo(() => {
-    const now = new Date();
-    return bookings
-      .filter((b) => b.status !== 'CANCELLED')
-      .filter((b) => {
-        const date = parseYmd(b.experienceDate);
-        return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth();
-      })
-      .reduce((sum, b) => sum + (b.totalPrice ?? 0), 0);
-  }, [bookings]);
+  const upcoming = useMemo(() => selectUpcoming(bookings), [bookings]);
+  const monthSpend = useMemo(() => sumMonthSpend(bookings), [bookings]);
 
   if (isLoading || !isAuthenticated) {
     return (
@@ -178,7 +138,7 @@ export default function DashboardPage() {
             {isLoadingData
               ? '일정을 불러오는 중...'
               : nextUp
-                ? `다음 체험: ${dDayLabel(daysFromToday(nextUp.date))} · ${nextUp.booking.experience?.programName ?? '프로그램'}`
+                ? `다음 체험: ${dDayLabel(nextUp.days)} · ${nextUp.booking.experience?.programName ?? '프로그램'}`
                 : '예정된 체험이 없어요.'}
           </p>
         </section>
@@ -241,8 +201,7 @@ export default function DashboardPage() {
               </div>
             ) : (
               <ul className="space-y-3">
-                {upcoming.slice(0, 5).map(({ booking, date }) => {
-                  const days = daysFromToday(date);
+                {upcoming.slice(0, 5).map(({ booking, date, days }) => {
                   return (
                     <li key={booking.id}>
                       <Link

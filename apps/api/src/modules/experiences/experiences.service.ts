@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like, Between, Brackets } from 'typeorm';
+import { Repository, Brackets } from 'typeorm';
 import { Experience } from './entities/experience.entity';
 import { ExperienceRun } from '../experience-runs/experience-runs.entity';
 import { CreateExperienceDto } from './dto/create-experience.dto';

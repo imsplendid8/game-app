@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ExperiencesService } from './experiences.service';
 import { CreateExperienceDto } from './dto/create-experience.dto';
+import { Experience } from './entities/experience.entity';
 
 @ApiTags('Experiences')
 @Controller('api/experiences')
@@ -66,7 +67,7 @@ export class ExperiencesController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Update experience program' })
-  async update(@Param('id') id: string, @Body() data: any) {
+  async update(@Param('id') id: string, @Body() data: Partial<Experience>) {
     return await this.experiencesService.update(id, data);
   }
 

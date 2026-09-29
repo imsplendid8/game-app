@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import { UnauthorizedException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 
@@ -79,7 +80,7 @@ describe('AuthService', () => {
       const mockUser: any = {
         id: 'user-1',
         email: 'test@example.com',
-        passwordHash: '$2b$10$hashed.password.here',
+        passwordHash: await bcrypt.hash('SomePassword123', 4),
       };
 
       mockUsersService.getUserByEmail.mockResolvedValue(mockUser);
@@ -90,6 +91,18 @@ describe('AuthService', () => {
       expect(result.accessToken).toBe('access-token');
       expect(result.refreshToken).toBe('refresh-token');
       expect(result.expiresIn).toBe(86400);
+    });
+
+    it('should throw UnauthorizedException on wrong password', async () => {
+      mockUsersService.getUserByEmail.mockResolvedValue({
+        id: 'user-1',
+        email: 'test@example.com',
+        passwordHash: await bcrypt.hash('SomePassword123', 4),
+      });
+
+      await expect(service.login('test@example.com', 'WrongPassword')).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('should throw UnauthorizedException on invalid email', async () => {
@@ -145,7 +158,7 @@ describe('AuthService', () => {
       const mockUser: any = {
         id: 'user-1',
         email: 'test@example.com',
-        passwordHash: '$2b$10$old.password.hash',
+        passwordHash: await bcrypt.hash('OldPassword123', 4),
       };
 
       mockUsersService.getUserById.mockResolvedValue(mockUser);
@@ -153,7 +166,22 @@ describe('AuthService', () => {
 
       await service.changePassword('user-1', 'OldPassword123', 'NewPassword456');
 
-      expect(mockUsersService.updateUserPassword).toHaveBeenCalled();
+      const [userId, newHash] = mockUsersService.updateUserPassword.mock.calls[0];
+      expect(userId).toBe('user-1');
+      expect(await bcrypt.compare('NewPassword456', newHash)).toBe(true);
+    });
+
+    it('should reject when the current password is wrong', async () => {
+      mockUsersService.getUserById.mockResolvedValue({
+        id: 'user-1',
+        email: 'test@example.com',
+        passwordHash: await bcrypt.hash('OldPassword123', 4),
+      });
+
+      await expect(
+        service.changePassword('user-1', 'NotMyPassword', 'NewPassword456'),
+      ).rejects.toThrow(UnauthorizedException);
+      expect(mockUsersService.updateUserPassword).not.toHaveBeenCalled();
     });
 
     it('should throw UnauthorizedException if user not found', async () => {

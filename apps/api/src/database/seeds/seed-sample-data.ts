@@ -40,7 +40,7 @@ async function seedData() {
   console.log('✅ Created 3 institutions');
 
   // Create experiences
-  const docent = await experienceRepository.save({
+  await experienceRepository.save({
     institutionId: nationalMuseum.id,
     programName: '어린이 도슨트 프로그램',
     description: '박물관 유물을 설명하는 어린이 도슨트 프로그램',
@@ -54,7 +54,7 @@ async function seedData() {
     bookingMethod: 'FIRST_COME',
   });
 
-  const milkTour = await experienceRepository.save({
+  await experienceRepository.save({
     institutionId: seoulMilk.id,
     programName: '낙농 체험 투어',
     description: '우유 생산 과정을 직접 체험하는 프로그램',
@@ -69,7 +69,7 @@ async function seedData() {
     price: 5000,
   });
 
-  const scienceWorkshop = await experienceRepository.save({
+  await experienceRepository.save({
     institutionId: scienceCenter.id,
     programName: '생명과학 실험실',
     description: '세포와 생명에 대해 배우는 실험 프로그램',

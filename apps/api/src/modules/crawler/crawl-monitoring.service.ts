@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, MoreThan } from 'typeorm';
+import { In, Repository, MoreThan } from 'typeorm';
 import { CrawlHistory, CrawlStatus } from './entities/crawl-history.entity';
 import { AdapterState } from './entities/adapter-state.entity';
 
@@ -104,10 +104,7 @@ export class CrawlMonitoringService {
 
     return this.crawlHistoryRepository.find({
       where: {
-        status: (() => {
-          // Placeholder for querying failed status
-          return CrawlStatus.FAILURE as any;
-        })() as any,
+        status: In([CrawlStatus.FAILURE, CrawlStatus.PARTIAL_FAILURE]),
         createdAt: MoreThan(since),
       },
       order: { createdAt: 'DESC' },
