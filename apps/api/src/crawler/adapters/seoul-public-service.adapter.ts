@@ -80,7 +80,7 @@ export class SeoulPublicServiceAdapter extends BaseAdapter {
     super(
       'seoul-public-service',
       process.env.SEOUL_OPENAPI_BASE_URL || SEOUL_BASE_URL,
-      CrawlSchedule.DAILY,
+      CrawlSchedule.DAILY
     );
 
     this.metadata.automationInfo = {
@@ -96,7 +96,7 @@ export class SeoulPublicServiceAdapter extends BaseAdapter {
     if (!apiKey) {
       // 앱 화면의 "마지막 수집 결과"에 그대로 보인다.
       throw new Error(
-        '서울시 인증키(SEOUL_OPENAPI_KEY)가 .env에 없습니다. data.seoul.go.kr에서 발급받아 넣어주세요.',
+        '서울시 인증키(SEOUL_OPENAPI_KEY)가 .env에 없습니다. data.seoul.go.kr에서 발급받아 넣어주세요.'
       );
     }
 
@@ -128,25 +128,20 @@ export class SeoulPublicServiceAdapter extends BaseAdapter {
     return error instanceof Error ? error.message : String(error);
   }
 
-  private async fetchService(
-    apiKey: string,
-    service: string,
-  ): Promise<ExperienceData[]> {
+  private async fetchService(apiKey: string, service: string): Promise<ExperienceData[]> {
     const collected: ExperienceData[] = [];
     let start = 1;
 
     for (;;) {
       const end = start + PAGE_SIZE - 1;
-      const response = await this.http.get(
-        `/${apiKey}/json/${service}/${start}/${end}/`,
-      );
+      const response = await this.http.get(`/${apiKey}/json/${service}/${start}/${end}/`);
       const body: SeoulServiceBody | undefined = response.data?.[service];
 
       if (!body) {
         // 인증키 오류·호출한도 초과 등은 서비스 키 없이 RESULT만 돌려준다.
         const result = response.data?.RESULT;
         throw new Error(
-          `예상과 다른 응답: ${result?.CODE ?? '?'} ${result?.MESSAGE ?? JSON.stringify(response.data).slice(0, 200)}`,
+          `예상과 다른 응답: ${result?.CODE ?? '?'} ${result?.MESSAGE ?? JSON.stringify(response.data).slice(0, 200)}`
         );
       }
 
@@ -162,7 +157,7 @@ export class SeoulPublicServiceAdapter extends BaseAdapter {
       if (rows.length > 0 && mapped.length === 0) {
         // 필드명이 바뀌면 조용히 0건이 되므로 실제 필드를 남겨 원인을 바로 알 수 있게 한다.
         throw new Error(
-          `${rows.length}건을 받았지만 응답 형식이 예상과 달라 읽지 못했습니다. 받은 필드: ${Object.keys(rows[0]).join(', ')}`,
+          `${rows.length}건을 받았지만 응답 형식이 예상과 달라 읽지 못했습니다. 받은 필드: ${Object.keys(rows[0]).join(', ')}`
         );
       }
 
@@ -177,17 +172,14 @@ export class SeoulPublicServiceAdapter extends BaseAdapter {
     return collected;
   }
 
-  private mapRow(
-    row: SeoulReservationRow,
-    service: string,
-  ): ExperienceData | null {
+  private mapRow(row: SeoulReservationRow, service: string): ExperienceData | null {
     if (!row.SVCID || !row.SVCNM) return null;
 
     return {
       externalId: row.SVCID,
-      institutionName: row.PLACENM?.trim() || '서울시 공공서비스예약',
-      programName: row.SVCNM.trim(),
-      description: row.DTLCONT?.trim() || undefined,
+      institutionName: decodeHtml(row.PLACENM) || '서울시 공공서비스예약',
+      programName: decodeHtml(row.SVCNM),
+      description: decodeHtml(row.DTLCONT) || undefined,
       programUrl: row.SVCURL || undefined,
       bookingUrl: row.SVCURL || undefined,
       experienceDate: this.parseSeoulDate(row.SVCOPNBGNDT),
@@ -207,9 +199,7 @@ export class SeoulPublicServiceAdapter extends BaseAdapter {
     return this.parseDate(value.replace(/\.0$/, '').replace(' ', 'T'));
   }
 
-  private mapStatus(
-    statusName?: string,
-  ): 'OPENING_SOON' | 'OPEN' | 'CLOSED' | 'UNKNOWN' {
+  private mapStatus(statusName?: string): 'OPENING_SOON' | 'OPEN' | 'CLOSED' | 'UNKNOWN' {
     switch (statusName) {
       case '접수중':
         return 'OPEN';
@@ -223,4 +213,24 @@ export class SeoulPublicServiceAdapter extends BaseAdapter {
         return 'UNKNOWN';
     }
   }
+}
+
+const NAMED_ENTITIES: Record<string, string> = {
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'",
+  nbsp: ' ',
+  middot: '·',
+};
+
+/** 서울시 API는 "&middot;", "&#39;" 처럼 HTML 엔티티가 섞인 글자를 돌려준다. */
+export function decodeHtml(value?: string): string {
+  if (!value) return '';
+  return value
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(Number(dec)))
+    .replace(/&([a-z]+);/gi, (match, name) => NAMED_ENTITIES[name.toLowerCase()] ?? match)
+    .trim();
 }

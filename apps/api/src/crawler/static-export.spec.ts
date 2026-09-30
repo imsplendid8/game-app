@@ -11,7 +11,11 @@ const program = (overrides: Partial<ExperienceData> = {}): ExperienceData => ({
   ...overrides,
 });
 
-const adapter = (name: string, fetch: () => Promise<ExperienceData[]>, enabled = true): Adapter => ({
+const adapter = (
+  name: string,
+  fetch: () => Promise<ExperienceData[]>,
+  enabled = true
+): Adapter => ({
   metadata: { name, enabled, schedule: CrawlSchedule.DAILY },
   fetchPrograms: fetch,
 });
@@ -28,7 +32,7 @@ describe('static export', () => {
         bookingOpenAt: new Date('2026-10-01T01:00:00Z'),
         price: 0,
         ageGroup: '6-12',
-      }),
+      })
     );
 
     expect(result).toMatchObject({
@@ -54,7 +58,10 @@ describe('static export', () => {
       adapter('seoul-public-service', async () => {
         throw new Error('인증키가 유효하지 않습니다');
       }),
-      adapter('data-loader', async () => [program({ externalId: 'a' }), program({ externalId: 'b' })]),
+      adapter('data-loader', async () => [
+        program({ externalId: 'a' }),
+        program({ externalId: 'b' }),
+      ]),
       adapter('museum', async () => [program({ externalId: 'x' })], false),
     ]);
 
@@ -63,7 +70,11 @@ describe('static export', () => {
       'ListPublicReservationEducation-b',
     ]);
     expect(result.sources).toEqual([
-      expect.objectContaining({ adapterName: 'seoul-public-service', ok: false, errorMessage: '인증키가 유효하지 않습니다' }),
+      expect.objectContaining({
+        adapterName: 'seoul-public-service',
+        ok: false,
+        errorMessage: '인증키가 유효하지 않습니다',
+      }),
       expect.objectContaining({ adapterName: 'data-loader', ok: true, programsFound: 2 }),
     ]);
   });
@@ -74,5 +85,24 @@ describe('static export', () => {
     ]);
     expect(result.programs).toHaveLength(1);
     expect(result.programs[0].programName).toBe('갱신된 이름');
+  });
+
+  it('접수가 이미 끝난 프로그램은 뺀다', async () => {
+    const now = new Date('2026-10-01T00:00:00Z');
+    const result = await collectPrograms(
+      [
+        adapter('seoul-public-service', async () => [
+          program({ externalId: 'past', bookingCloseAt: new Date('2026-09-30T09:00:00Z') }),
+          program({ externalId: 'open', bookingCloseAt: new Date('2026-10-03T09:00:00Z') }),
+          program({ externalId: 'closed', status: 'CLOSED' }),
+          program({ externalId: 'unknown-close' }),
+        ]),
+      ],
+      now
+    );
+    expect(result.programs.map((p) => p.id)).toEqual([
+      'ListPublicReservationEducation-open',
+      'ListPublicReservationEducation-unknown-close',
+    ]);
   });
 });

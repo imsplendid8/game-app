@@ -82,7 +82,16 @@ export function toStaticProgram(program: ExperienceData): StaticProgram {
   };
 }
 
-export async function collectPrograms(adapters: Adapter[]): Promise<ProgramsFile> {
+/** 접수가 이미 끝난 프로그램은 둘러볼 이유가 없으니 정적 목록에서 뺀다 (이미 한 예약은 브라우저에 사본이 있다). */
+export function isStillBookable(program: StaticProgram, now: Date): boolean {
+  if (program.bookingCloseAt) return new Date(program.bookingCloseAt) >= now;
+  return program.status !== 'CLOSED';
+}
+
+export async function collectPrograms(
+  adapters: Adapter[],
+  now: Date = new Date()
+): Promise<ProgramsFile> {
   const sources: SourceResult[] = [];
   const programs = new Map<string, StaticProgram>();
 
@@ -93,7 +102,7 @@ export async function collectPrograms(adapters: Adapter[]): Promise<ProgramsFile
       const found = await adapter.fetchPrograms();
       for (const program of found) {
         const item = toStaticProgram(program);
-        programs.set(item.id, item);
+        if (isStillBookable(item, now)) programs.set(item.id, item);
       }
       sources.push({
         adapterName: adapter.metadata.name,

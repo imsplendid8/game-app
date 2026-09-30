@@ -1,4 +1,4 @@
-import { SeoulPublicServiceAdapter } from './seoul-public-service.adapter';
+import { decodeHtml, SeoulPublicServiceAdapter } from './seoul-public-service.adapter';
 
 /**
  * 서울 열린데이터광장 공공서비스예약 API 응답 형태를 고정해 두고 매핑을 검증한다.
@@ -14,7 +14,8 @@ const educationRow = {
   PAYATNM: '유료',
   PLACENM: '서울시립과학관',
   USETGTINFO: '초등 3-6학년',
-  SVCURL: 'https://yeyak.seoul.go.kr/web/reservation/selectReservView.do?rsv_svc_id=S240101000000001',
+  SVCURL:
+    'https://yeyak.seoul.go.kr/web/reservation/selectReservView.do?rsv_svc_id=S240101000000001',
   RCPTBGNDT: '2026-09-01 10:00:00.0',
   RCPTENDDT: '2026-09-20 18:00:00.0',
   SVCOPNBGNDT: '2026-09-26 00:00:00.0',
@@ -70,9 +71,7 @@ describe('SeoulPublicServiceAdapter', () => {
     const programs = await adapter.fetchPrograms();
     const program = programs.find((p) => p.externalId === 'S240101000000001');
 
-    expect(get).toHaveBeenCalledWith(
-      '/test-key/json/ListPublicReservationEducation/1/1000/',
-    );
+    expect(get).toHaveBeenCalledWith('/test-key/json/ListPublicReservationEducation/1/1000/');
     expect(program).toMatchObject({
       institutionName: '서울시립과학관',
       programName: '어린이 목공 교실',
@@ -147,7 +146,7 @@ describe('SeoulPublicServiceAdapter', () => {
               },
             },
           }
-        : { data: { RESULT: { CODE: 'ERROR-500', MESSAGE: '서버 오류' } } },
+        : { data: { RESULT: { CODE: 'ERROR-500', MESSAGE: '서버 오류' } } }
     );
 
     const programs = await adapter.fetchPrograms();
@@ -171,5 +170,15 @@ describe('SeoulPublicServiceAdapter', () => {
     });
 
     await expect(adapter.fetchPrograms()).rejects.toThrow('받은 필드: SERVICE_ID, SERVICE_NAME');
+  });
+});
+
+describe('decodeHtml', () => {
+  it('서울시 응답의 HTML 엔티티를 글자로 바꾼다', () => {
+    expect(decodeHtml(' 2026년 상&middot;하반기 &#39;내 친구 박물관&#39; &amp; &#x41; ')).toBe(
+      "2026년 상·하반기 '내 친구 박물관' & A"
+    );
+    expect(decodeHtml('&unknown; 그대로')).toBe('&unknown; 그대로');
+    expect(decodeHtml(undefined)).toBe('');
   });
 });
