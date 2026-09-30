@@ -4,7 +4,7 @@
 
 ## 🌐 인터넷 주소로 쓰기 (설치 필요 없음)
 
-**https://imsplendid8.github.io/game-app** 에서 PC·휴대폰 어디서나 바로 열립니다.
+**https://imsplendid8.github.io/<저장소 이름>** (예: `WITHKIDS`) 에서 PC·휴대폰 어디서나 바로 열립니다. 저장소 이름을 바꾸면 다음 배포부터 주소도 따라 바뀝니다.
 
 - 프로그램 정보는 매일 아침 6시에 GitHub Actions가 서울시 API에서 가져와 다시 배포합니다.
   바로 새로 가져오려면 대시보드의 **데이터 수집 → 지금 수집하기** 를 누르고, 열린 GitHub 화면에서 **Run workflow** 를 누르세요.

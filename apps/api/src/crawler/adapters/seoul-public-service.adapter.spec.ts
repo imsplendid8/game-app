@@ -1,6 +1,7 @@
 import {
   decodeHtml,
   htmlToText,
+  inferDistrict,
   SeoulPublicServiceAdapter,
   stripCommonNotice,
 } from './seoul-public-service.adapter';
@@ -226,5 +227,24 @@ describe('stripCommonNotice', () => {
     expect(stripCommonNotice('1. 공공시설 예약서비스 안내\n상세내용 없음')).toBe(
       '1. 공공시설 예약서비스 안내\n상세내용 없음'
     );
+  });
+});
+
+describe('inferDistrict', () => {
+  it('서울시가 준 지역을 우선 쓴다', () => {
+    expect(inferDistrict('송파구', '성동가드닝센터', '')).toBe('송파구');
+  });
+
+  it('비어 있으면 장소·이름에서 구를 찾는다', () => {
+    expect(inferDistrict('', '봉수대공원', '(중랑구)봉수대공원-서울형정원처방')).toBe('중랑구');
+    expect(inferDistrict('', '성동가드닝센터', '성동 가드닝 프로그램')).toBe('성동구');
+    expect(inferDistrict('', '중구정원지원센터', '중구 반려식물 클리닉')).toBe('중구');
+    expect(inferDistrict('', '중부공원여가센터>호현당', '(토)호현당 서당체험(가족)')).toBe('중구');
+    expect(inferDistrict('', '서울둘레길 10코스(매헌시민의숲) 일대', '정원처방')).toBe('서초구');
+  });
+
+  it('서울 밖 체험은 "서울 외", 모르면 비워 둔다', () => {
+    expect(inferDistrict('', '가평 아홉마지기마을', '[도시가족 주말농부]')).toBe('서울 외');
+    expect(inferDistrict('', '회차별 상이', '문학 속 영화 투어')).toBe('');
   });
 });

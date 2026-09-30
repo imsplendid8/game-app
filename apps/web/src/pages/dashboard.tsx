@@ -33,6 +33,7 @@ interface ScheduleRun {
     programUrl?: string | null;
     bookingUrl?: string | null;
     institution?: { institutionName: string };
+    area?: string | null;
   };
 }
 
@@ -212,6 +213,9 @@ function ScheduleItem({ run }: { run: ScheduleRun }) {
       <div className="min-w-0 flex-1">
         <p className="font-medium text-gray-900 truncate">{run.experience.programName}</p>
         <p className="text-xs text-gray-500 truncate">
+          {run.experience.area && (
+            <span className="font-semibold text-gray-700">{run.experience.area} · </span>
+          )}
           {run.experience.institution?.institutionName ?? '-'}
         </p>
         <p className="text-sm mt-1 flex items-center gap-1 text-gray-700">

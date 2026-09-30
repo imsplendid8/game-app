@@ -199,7 +199,9 @@ export class SeoulPublicServiceAdapter extends BaseAdapter {
       targetInfo: decodeHtml(row.USETGTINFO) || undefined,
       category:
         [row.MAXCLASSNM, row.MINCLASSNM].map(decodeHtml).filter(Boolean).join(' > ') || undefined,
-      area: decodeHtml(row.AREANM) || undefined,
+      area:
+        inferDistrict(decodeHtml(row.AREANM), decodeHtml(row.PLACENM), decodeHtml(row.SVCNM)) ||
+        undefined,
       paymentInfo: decodeHtml(row.PAYATNM) || undefined,
       imageUrl: row.IMGURL?.trim() || undefined,
       contact: decodeHtml(row.TELNO) || undefined,
@@ -276,4 +278,56 @@ export function stripCommonNotice(text: string): string {
   const match = text.match(/(?:^|\s)3\.\s*상세\s*내용\s*/);
   if (!match || match.index === undefined) return text;
   return text.slice(match.index + match[0].length).trim();
+}
+
+export const SEOUL_DISTRICTS = [
+  '종로구',
+  '중구',
+  '용산구',
+  '성동구',
+  '광진구',
+  '동대문구',
+  '중랑구',
+  '성북구',
+  '강북구',
+  '도봉구',
+  '노원구',
+  '은평구',
+  '서대문구',
+  '마포구',
+  '양천구',
+  '강서구',
+  '구로구',
+  '금천구',
+  '영등포구',
+  '동작구',
+  '관악구',
+  '서초구',
+  '강남구',
+  '송파구',
+  '강동구',
+] as const;
+
+/** 구 이름 없이 장소 이름만 있는 곳 */
+const LANDMARK_DISTRICTS: Array<[RegExp, string]> = [
+  [/남산|중부공원|석호정|호현당|대한문|정동|서울갤러리|서울도서관/, '중구'],
+  [/매헌시민의숲|양재시민의숲/, '서초구'],
+  [/한성대입구/, '성북구'],
+  // 서울시가 운영하지만 서울 밖에서 하는 체험 (주말농장 등)
+  [/가평|강화|연천|안성|영월|양평|포천|파주|김포|남양주|홍천|춘천/, '서울 외'],
+];
+
+/**
+ * 지역(자치구). 서울시가 비워 둔 경우 장소·프로그램 이름에서 찾는다.
+ * "(중랑구)봉수대공원", "성동가드닝센터"처럼 이름에 구가 들어 있는 경우가 많다.
+ */
+export function inferDistrict(area: string, place: string, name: string): string {
+  if (area) return area;
+  const text = `${place} ${name}`;
+  const full = SEOUL_DISTRICTS.find((d) => text.includes(d));
+  if (full) return full;
+  // "성동가드닝센터" → 성동구 (한 글자인 '중'은 흔한 글자라 제외)
+  const short = SEOUL_DISTRICTS.find((d) => d.length > 2 && text.includes(d.slice(0, -1)));
+  if (short) return short;
+  return LANDMARK_DISTRICTS.find(([re]) => re.test(text))?.[1] ?? '';
 }

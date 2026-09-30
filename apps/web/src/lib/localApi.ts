@@ -269,6 +269,21 @@ function toExperience(
   };
 }
 
+/** 지역(구) 목록과 프로그램 수. 서울 25개 구를 가나다순, 그 밖은 뒤로 */
+function areaCounts(programs: StaticProgram[]): Array<{ name: string; count: number }> {
+  const counts = new Map<string, number>();
+  for (const p of programs) {
+    if (p.area) counts.set(p.area, (counts.get(p.area) ?? 0) + 1);
+  }
+  const inSeoul = (name: string) => /구$/.test(name);
+  return [...counts.entries()]
+    .map(([name, count]) => ({ name, count }))
+    .sort(
+      (a, b) =>
+        Number(inSeoul(b.name)) - Number(inSeoul(a.name)) || a.name.localeCompare(b.name, 'ko')
+    );
+}
+
 /** "6-10" 같은 연령대 필터가 프로그램 대상 연령과 겹치는지 */
 function matchesAgeGroup(program: StaticProgram, ageGroup: string): boolean {
   const [min, max] = ageGroup.split('-').map(Number);
@@ -354,6 +369,7 @@ export class LocalApiClient implements ApiClientContract {
     const eligibility = (
       params.eligibility ? String(params.eligibility) : 'all'
     ) as EligibilityFilter;
+    const area = params.area ? String(params.area) : '';
     const limit = Number(params.limit) || 12;
     const offset = Number(params.offset) || 0;
     const children = getChildren();
@@ -365,6 +381,7 @@ export class LocalApiClient implements ApiClientContract {
           `${p.programName} ${p.institutionName} ${p.description ?? ''} ${p.targetInfo ?? ''}`.toLowerCase();
         if (!haystack.includes(search)) return false;
       }
+      if (area && (p.area || '') !== area) return false;
       if (
         eligibility !== 'all' &&
         !matchesEligibility(eligibilityOf(p, children, today), eligibility)
@@ -400,6 +417,7 @@ export class LocalApiClient implements ApiClientContract {
     return {
       data: list.slice(offset, offset + limit).map((p) => toExperience(p, children, today)),
       total: list.length,
+      areas: areaCounts(programs),
     };
   }
 
@@ -430,6 +448,7 @@ export class LocalApiClient implements ApiClientContract {
           programUrl: p.programUrl,
           bookingUrl: p.bookingUrl,
           institution: { institutionName: p.institutionName },
+          area: p.area ?? null,
         },
       }));
   }

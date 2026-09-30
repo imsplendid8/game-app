@@ -15,7 +15,15 @@ import { STATIC_MODE } from '@/lib/staticMode';
 import { getChildren } from '@/lib/children';
 import type { Child, EligibilityFilter, ProgramEligibility } from '@/lib/eligibility';
 import Link from 'next/link';
-import { FiSearch, FiFilter, FiDollarSign, FiUsers, FiBookmark, FiStar } from 'react-icons/fi';
+import {
+  FiSearch,
+  FiFilter,
+  FiDollarSign,
+  FiUsers,
+  FiBookmark,
+  FiStar,
+  FiMapPin,
+} from 'react-icons/fi';
 
 interface Experience extends SeoulProgramFields {
   id: string;
@@ -38,6 +46,8 @@ interface Experience extends SeoulProgramFields {
 interface SearchResponse {
   data: Experience[];
   total: number;
+  /** 정적 모드: 지역(구)별 프로그램 수 */
+  areas?: Array<{ name: string; count: number }>;
 }
 
 export default function ExperiencesPage() {
@@ -60,6 +70,8 @@ export default function ExperiencesPage() {
   const [ratings, setRatings] = useState<Record<string, number>>({});
   const [children, setChildren] = useState<Child[]>([]);
   const [eligibility, setEligibility] = useState<EligibilityFilter>('all');
+  const [area, setArea] = useState('');
+  const [areas, setAreas] = useState<Array<{ name: string; count: number }>>([]);
 
   const itemsPerPage = 12;
 
@@ -71,8 +83,27 @@ export default function ExperiencesPage() {
 
   useEffect(() => {
     hydrate();
-    if (STATIC_MODE) setChildren(getChildren());
+    if (STATIC_MODE) {
+      setChildren(getChildren());
+      // 자주 보는 구는 이 브라우저에 기억해 둔다
+      try {
+        setArea(localStorage.getItem(AREA_KEY) ?? '');
+      } catch {
+        /* 저장소를 못 쓰면 전체 지역 */
+      }
+    }
   }, [hydrate]);
+
+  const handleAreaChange = (value: string) => {
+    setArea(value);
+    setCurrentPage(1);
+    try {
+      if (value) localStorage.setItem(AREA_KEY, value);
+      else localStorage.removeItem(AREA_KEY);
+    } catch {
+      /* 무시 */
+    }
+  };
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -98,6 +129,7 @@ export default function ExperiencesPage() {
           search: searchQuery || undefined,
           ageGroup: ageGroupParam,
           eligibility: STATIC_MODE ? eligibility : undefined,
+          area: STATIC_MODE && area ? area : undefined,
           sort: sortBy,
           limit: itemsPerPage,
           offset: (currentPage - 1) * itemsPerPage,
@@ -105,6 +137,7 @@ export default function ExperiencesPage() {
 
         setExperiences(response.data || []);
         setTotalResults(response.total || 0);
+        if (response.areas) setAreas(response.areas);
 
         // Fetch ratings for each experience
         const newRatings: Record<string, number> = {};
@@ -128,7 +161,7 @@ export default function ExperiencesPage() {
     };
 
     fetchExperiences();
-  }, [isAuthenticated, searchQuery, selectedAgeGroup, eligibility, sortBy, currentPage]);
+  }, [isAuthenticated, searchQuery, selectedAgeGroup, eligibility, area, sortBy, currentPage]);
 
   if (isLoading || !isAuthenticated) {
     return (
@@ -192,7 +225,7 @@ export default function ExperiencesPage() {
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Search Input */}
-            <div className="md:col-span-3 relative">
+            <div className={`relative ${STATIC_MODE ? 'md:col-span-2' : 'md:col-span-3'}`}>
               <FiSearch className="absolute left-3 top-3 text-gray-400" size={20} />
               <input
                 type="text"
@@ -205,6 +238,29 @@ export default function ExperiencesPage() {
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
+
+            {/* 지역(구) */}
+            {STATIC_MODE && (
+              <div className="relative">
+                <FiMapPin className="absolute left-3 top-3 text-gray-400" size={18} />
+                <select
+                  value={area}
+                  onChange={(e) => handleAreaChange(e.target.value)}
+                  aria-label="지역"
+                  className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                >
+                  <option value="">서울 전체</option>
+                  {area && !areas.some((a) => a.name === area) && (
+                    <option value={area}>{area}</option>
+                  )}
+                  {areas.map((a) => (
+                    <option key={a.name} value={a.name}>
+                      {a.name} ({a.count})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* Sort Dropdown */}
             <select
@@ -347,7 +403,16 @@ export default function ExperiencesPage() {
                     </div>
                   )}
                   <h3 className="font-bold text-gray-900 mb-1 line-clamp-2">{exp.programName}</h3>
-                  <p className="text-sm text-gray-600 mb-3">{exp.institution.institutionName}</p>
+                  <p className="text-sm text-gray-600 mb-3 flex items-center gap-1.5 min-w-0">
+                    {STATIC_MODE && exp.area && (
+                      <span className="inline-flex items-center gap-0.5 font-semibold text-gray-800 shrink-0">
+                        <FiMapPin size={14} className="text-blue-600" />
+                        {exp.area}
+                      </span>
+                    )}
+                    {STATIC_MODE && exp.area && <span className="text-gray-300">·</span>}
+                    <span className="truncate">{exp.institution.institutionName}</span>
+                  </p>
 
                   {STATIC_MODE && (
                     <div className="mb-3">
@@ -493,3 +558,5 @@ function eligibilityOptions(
   }
   return options;
 }
+
+const AREA_KEY = 'withdkis.area';

@@ -47,11 +47,6 @@ export function ProgramBadges({ program }: { program: SeoulProgramFields }) {
           {program.paymentInfo}
         </span>
       )}
-      {program.area && (
-        <span className="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
-          {program.area}
-        </span>
-      )}
     </div>
   );
 }

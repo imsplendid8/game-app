@@ -1,6 +1,7 @@
 name: GitHub Pages
 
-# https://imsplendid8.github.io/game-app 에 정적 버전을 올린다.
+# https://imsplendid8.github.io/<저장소 이름> 에 정적 버전을 올린다.
+# 주소는 저장소 이름을 따라가므로 저장소 이름을 바꾸면 주소도 자동으로 바뀐다.
 # - 프로그램 정보: 빌드할 때 서울시 API 등에서 수집해 data/programs.json 으로 넣는다
 # - 예약·후기·찜: 방문한 브라우저에 저장된다 (서버 없음)
 on:
@@ -48,7 +49,8 @@ jobs:
         run: npm run build --workspace=apps/web
         env:
           NEXT_PUBLIC_STATIC_MODE: 'true'
-          NEXT_PUBLIC_BASE_PATH: /game-app
+          NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
+          NEXT_PUBLIC_CRAWL_WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/workflows/pages.yml
 
       # GitHub Pages가 _next 폴더를 무시하지 않도록
       - run: touch apps/web/out/.nojekyll

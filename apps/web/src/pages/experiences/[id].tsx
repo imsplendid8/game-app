@@ -24,6 +24,7 @@ import {
   FiCalendar,
   FiExternalLink,
   FiEdit3,
+  FiMapPin,
 } from 'react-icons/fi';
 
 interface Experience extends SeoulProgramFields {
@@ -186,7 +187,16 @@ export default function ExperienceDetailPage() {
                       <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
                         {experience.programName}
                       </h1>
-                      <p className="text-gray-600">{experience.institution.institutionName}</p>
+                      <p className="text-gray-600 flex items-center gap-1.5 flex-wrap">
+                        {experience.area && (
+                          <span className="inline-flex items-center gap-0.5 font-semibold text-gray-800">
+                            <FiMapPin size={16} className="text-blue-600" />
+                            {experience.area}
+                          </span>
+                        )}
+                        {experience.area && <span className="text-gray-300">·</span>}
+                        {experience.institution.institutionName}
+                      </p>
                     </div>
                     <button
                       onClick={handleBookmark}
