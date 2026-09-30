@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useAuthStore } from '@/store/authStore';
@@ -6,21 +6,8 @@ import { useBookmarkStore } from '@/store/bookmarkStore';
 import { apiClient } from '@/lib/api';
 import { MainLayout } from '@/components/layouts/MainLayout';
 import { CrawlStatusPanel } from '@/components/CrawlStatusPanel';
-import {
-  dDayLabel,
-  daysFromToday,
-  formatMonthDay,
-  formatTime,
-  sumMonthSpend,
-} from '@/lib/bookingDates';
-import { FiBell, FiBookmark, FiCreditCard, FiClock, FiExternalLink } from 'react-icons/fi';
-
-interface Booking {
-  id: string;
-  status: 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
-  experienceDate: string;
-  totalPrice?: number | null;
-}
+import { dDayLabel, daysFromToday, formatMonthDay, formatTime } from '@/lib/bookingDates';
+import { FiBookmark, FiClock, FiExternalLink } from 'react-icons/fi';
 
 interface ScheduleRun {
   id: string;
@@ -42,9 +29,7 @@ export default function DashboardPage() {
   const { user, isAuthenticated, isLoading } = useAuthStore();
   const { bookmarks, hydrate: hydrateBookmarks } = useBookmarkStore();
 
-  const [bookings, setBookings] = useState<Booking[]>([]);
   const [schedule, setSchedule] = useState<ScheduleRun[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [scheduleError, setScheduleError] = useState(false);
 
@@ -56,27 +41,12 @@ export default function DashboardPage() {
 
   const load = useCallback(async () => {
     setIsLoadingData(true);
-    // 하나가 실패해도 나머지는 보여준다.
-    const [bookingsResult, scheduleResult, notificationsResult] = await Promise.allSettled([
-      apiClient.getBookings(),
-      apiClient.getBookingSchedule(14),
-      apiClient.getNotifications(),
-    ]);
-
-    if (bookingsResult.status === 'fulfilled') {
-      const data = bookingsResult.value;
-      setBookings(Array.isArray(data) ? data : (data?.data ?? []));
-    }
-
-    if (scheduleResult.status === 'fulfilled') {
-      setSchedule(Array.isArray(scheduleResult.value) ? scheduleResult.value : []);
+    try {
+      const data = await apiClient.getBookingSchedule(14);
+      setSchedule(Array.isArray(data) ? data : []);
       setScheduleError(false);
-    } else {
+    } catch {
       setScheduleError(true);
-    }
-
-    if (notificationsResult.status === 'fulfilled' && Array.isArray(notificationsResult.value)) {
-      setUnreadCount(notificationsResult.value.length);
     }
 
     setIsLoadingData(false);
@@ -87,8 +57,6 @@ export default function DashboardPage() {
     hydrateBookmarks();
     load();
   }, [isAuthenticated, hydrateBookmarks, load]);
-
-  const monthSpend = useMemo(() => sumMonthSpend(bookings), [bookings]);
 
   if (isLoading || !isAuthenticated) {
     return (
@@ -113,20 +81,6 @@ export default function DashboardPage() {
 
         {/* 요약 */}
         <section className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-          <StatCard
-            label={`${today.getMonth() + 1}월 체험비`}
-            value={isLoadingData ? '–' : `${monthSpend.toLocaleString()}원`}
-            icon={<FiCreditCard className="text-emerald-600" size={22} />}
-            iconBg="bg-emerald-100"
-            href="/bookings"
-          />
-          <StatCard
-            label="새 알림"
-            value={isLoadingData ? '–' : `${unreadCount}건`}
-            icon={<FiBell className="text-orange-600" size={22} />}
-            iconBg="bg-orange-100"
-            href="/notifications"
-          />
           <StatCard
             label="찜한 프로그램"
             value={`${bookmarks.length}개`}
