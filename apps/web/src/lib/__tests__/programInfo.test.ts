@@ -40,13 +40,20 @@ describe('bookingWindowLabel', () => {
     expect(bookingWindowLabel(null, null, NOW)).toBeNull();
   });
 
-  it('상세용 전체 기간', () => {
+  it('상세용 기간: 접수 전·마감은 전체 기간, 접수 중이면 마감만', () => {
+    const open = new Date(2026, 9, 5, 9).toISOString();
+    const close = new Date(2026, 9, 20, 18).toISOString();
+    expect(bookingRangeLabel(open, close, NOW)).toBe('2026.10.05 09:00 ~ 2026.10.20 18:00');
+    expect(bookingRangeLabel(new Date(2015, 8, 22, 15).toISOString(), close, NOW)).toBe(
+      '접수 중 · 2026.10.20 18:00 마감'
+    );
     expect(
       bookingRangeLabel(
-        new Date(2026, 8, 1, 9).toISOString(),
-        new Date(2026, 9, 2, 18).toISOString()
+        new Date(2026, 7, 1).toISOString(),
+        new Date(2026, 8, 1, 18).toISOString(),
+        NOW
       )
-    ).toBe('2026.09.01 09:00 ~ 2026.10.02 18:00');
+    ).toBe('2026.08.01 00:00 ~ 2026.09.01 18:00');
   });
 });
 

@@ -46,10 +46,11 @@ export function bookingWindowLabel(
   return null;
 }
 
-/** 접수 기간 전체 (상세 화면) */
+/** 접수 기간 전체 (상세 화면). 오래전에 시작해 계속 접수 중이면 마감만 보여준다 */
 export function bookingRangeLabel(
   openAt: string | null | undefined,
-  closeAt: string | null | undefined
+  closeAt: string | null | undefined,
+  now: Date = new Date()
 ): string | null {
   if (!openAt && !closeAt) return null;
   const fmt = (iso: string) => {
@@ -58,6 +59,9 @@ export function bookingRangeLabel(
       d.getDate()
     ).padStart(2, '0')} ${formatTime(d)}`;
   };
+  const opened = openAt ? new Date(openAt) <= now : true;
+  const closed = closeAt ? new Date(closeAt) < now : false;
+  if (opened && !closed) return closeAt ? `접수 중 · ${fmt(closeAt)} 마감` : '접수 중';
   return `${openAt ? fmt(openAt) : ''} ~ ${closeAt ? fmt(closeAt) : ''}`.trim();
 }
 

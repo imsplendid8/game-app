@@ -1,4 +1,9 @@
-import { decodeHtml, htmlToText, SeoulPublicServiceAdapter } from './seoul-public-service.adapter';
+import {
+  decodeHtml,
+  htmlToText,
+  SeoulPublicServiceAdapter,
+  stripCommonNotice,
+} from './seoul-public-service.adapter';
 
 /**
  * 서울 열린데이터광장 공공서비스예약 API 응답 형태를 고정해 두고 매핑을 검증한다.
@@ -196,5 +201,30 @@ describe('htmlToText', () => {
       )
     ).toBe('1. 이용 안내\n\n준비물: 물·모자\n우천 시 취소\n문의 02-000');
     expect(htmlToText(undefined)).toBe('');
+  });
+});
+
+describe('stripCommonNotice', () => {
+  it('서울시 공통 안내를 걷어내고 상세내용부터 남긴다', () => {
+    const text =
+      '1. 공공시설 예약서비스 이용시 필수 준수사항\n모든 서비스의 이용은...\n2. 시설예약\n비회원일 경우...\n3. 상세내용\n[가을로 풍덩] 가을풀꽃놀이\n활동일 10월 18일\n4. 주의사항\n- 취소는 2일 전까지';
+    expect(stripCommonNotice(text)).toBe(
+      '[가을로 풍덩] 가을풀꽃놀이\n활동일 10월 18일\n4. 주의사항\n- 취소는 2일 전까지'
+    );
+  });
+
+  it('상세내용이 같은 줄에 이어져도 걷어낸다', () => {
+    expect(
+      stripCommonNotice(
+        '1. 공공시설 예약서비스 이용시 필수 준수사항 모든 서비스의... 2. 시설예약 비회원일 경우... 3. 상세내용 2026년 목편만들기\n■ 운영시간 : 14:00'
+      )
+    ).toBe('2026년 목편만들기\n■ 운영시간 : 14:00');
+  });
+
+  it('공통 안내가 없으면 그대로', () => {
+    expect(stripCommonNotice('목공 체험입니다.')).toBe('목공 체험입니다.');
+    expect(stripCommonNotice('1. 공공시설 예약서비스 안내\n상세내용 없음')).toBe(
+      '1. 공공시설 예약서비스 안내\n상세내용 없음'
+    );
   });
 });

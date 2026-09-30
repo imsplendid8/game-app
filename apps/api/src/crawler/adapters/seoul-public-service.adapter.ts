@@ -187,7 +187,7 @@ export class SeoulPublicServiceAdapter extends BaseAdapter {
       externalId: row.SVCID,
       institutionName: decodeHtml(row.PLACENM) || '서울시 공공서비스예약',
       programName: decodeHtml(row.SVCNM),
-      description: htmlToText(row.DTLCONT) || undefined,
+      description: stripCommonNotice(htmlToText(row.DTLCONT)) || undefined,
       programUrl: row.SVCURL || undefined,
       bookingUrl: row.SVCURL || undefined,
       experienceDate: this.parseSeoulDate(row.SVCOPNBGNDT),
@@ -265,4 +265,15 @@ export function htmlToText(value?: string): string {
     .filter((line, i, lines) => line || (i > 0 && lines[i - 1]))
     .join('\n')
     .trim();
+}
+
+/**
+ * 서울시 상세 설명은 모든 프로그램에 같은 공통 안내("1. 공공시설 예약서비스 이용시 필수 준수사항",
+ * "2. 시설예약")로 시작하고 "3. 상세내용"부터 실제 내용이 나온다. 공통 안내는 걷어낸다.
+ */
+export function stripCommonNotice(text: string): string {
+  if (!/^1\.\s*공공시설 예약서비스/.test(text)) return text;
+  const match = text.match(/(?:^|\s)3\.\s*상세\s*내용\s*/);
+  if (!match || match.index === undefined) return text;
+  return text.slice(match.index + match[0].length).trim();
 }
