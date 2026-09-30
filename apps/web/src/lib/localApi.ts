@@ -198,7 +198,7 @@ export function importLocalData(data: unknown): { bookings: number } {
     !Array.isArray(backup.bookings) ||
     !Array.isArray(backup.reviews)
   ) {
-    throw new Error('WithDKIS 백업 파일이 아닙니다.');
+    throw new Error('WITHKIDS 백업 파일이 아닙니다.');
   }
   if (backup.profile) write(KEY.profile, backup.profile);
   write(KEY.bookings, backup.bookings);

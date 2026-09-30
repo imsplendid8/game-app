@@ -54,9 +54,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             {/* Logo */}
             <Link href="/dashboard" className="flex items-center gap-2">
               <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">D</span>
+                <span className="text-white font-bold text-sm">W</span>
               </div>
-              <span className="text-lg font-bold text-slate-900 tracking-tight">WithDKIS</span>
+              <span className="text-lg font-bold text-slate-900 tracking-tight">WITHKIDS</span>
             </Link>
 
             {/* Desktop Navigation */}
@@ -145,7 +145,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       <footer className="bg-slate-900 border-t border-slate-800 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="text-center text-slate-400 text-sm" style={{ letterSpacing: '0.25px' }}>
-            <p>&copy; 2026 WithDKIS. All rights reserved.</p>
+            <p>&copy; 2026 WITHKIDS. All rights reserved.</p>
           </div>
         </div>
       </footer>

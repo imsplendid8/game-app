@@ -87,7 +87,7 @@ export default function SetupPage() {
       <div className="w-full max-w-md">
         <div className="bg-white rounded-lg shadow-lg p-8">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-blue-600">WithDKIS</h1>
+            <h1 className="text-3xl font-bold text-blue-600">WITHKIDS</h1>
             <p className="text-gray-900 font-semibold mt-4">처음 사용할 계정을 만들어주세요</p>
             <p className="text-gray-600 text-sm mt-1">
               한 번만 만들면 됩니다. 이후에는 이 계정으로만 로그인할 수 있어요.

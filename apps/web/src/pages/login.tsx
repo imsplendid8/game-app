@@ -57,7 +57,7 @@ export default function LoginPage() {
         <div className="bg-white rounded-lg shadow-lg p-8">
           {/* Logo */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-blue-600">WithDKIS</h1>
+            <h1 className="text-3xl font-bold text-blue-600">WITHKIDS</h1>
             <p className="text-gray-600 mt-2">아이들의 경험을 예약하세요</p>
           </div>
 
