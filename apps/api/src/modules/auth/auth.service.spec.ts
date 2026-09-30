@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
-import { UnauthorizedException } from '@nestjs/common';
+import { ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
@@ -16,6 +16,7 @@ describe('AuthService', () => {
       getUserById: jest.fn(),
       getUserByEmail: jest.fn(),
       updateUserPassword: jest.fn(),
+      countUsers: jest.fn().mockResolvedValue(0),
     };
 
     mockJwtService = {
@@ -72,6 +73,41 @@ describe('AuthService', () => {
       expect(result.email).toBe(userData.email);
       expect(result.accessToken).toBe('mocked-access-token');
       expect(mockUsersService.updateUserPassword).toHaveBeenCalled();
+    });
+
+    it('계정이 이미 있으면 가입을 막는다', async () => {
+      mockUsersService.countUsers.mockResolvedValue(1);
+
+      await expect(service.register('intruder@example.com', 'Password123')).rejects.toThrow(
+        ForbiddenException,
+      );
+      expect(mockUsersService.createUser).not.toHaveBeenCalled();
+    });
+
+    it('ALLOW_REGISTRATION=true 이면 계정이 있어도 가입을 받는다', async () => {
+      const previous = process.env.ALLOW_REGISTRATION;
+      process.env.ALLOW_REGISTRATION = 'true';
+      try {
+        mockUsersService.countUsers.mockResolvedValue(3);
+        mockUsersService.createUser.mockResolvedValue({ id: 'user-2', email: 'second@example.com' });
+        mockJwtService.sign.mockReturnValue('token');
+
+        await expect(service.register('second@example.com', 'Password123')).resolves.toMatchObject({
+          userId: 'user-2',
+        });
+      } finally {
+        if (previous === undefined) delete process.env.ALLOW_REGISTRATION;
+        else process.env.ALLOW_REGISTRATION = previous;
+      }
+    });
+  });
+
+  describe('needsSetup', () => {
+    it('계정이 없을 때만 true', async () => {
+      mockUsersService.countUsers.mockResolvedValueOnce(0).mockResolvedValueOnce(1);
+
+      await expect(service.needsSetup()).resolves.toBe(true);
+      await expect(service.needsSetup()).resolves.toBe(false);
     });
   });
 

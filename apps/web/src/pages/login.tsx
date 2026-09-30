@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import Link from 'next/link';
 import { useAuthStore, type User } from '@/store/authStore';
 import { apiClient } from '@/lib/api';
 
@@ -12,6 +11,18 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // 계정이 하나도 없으면 첫 계정 만들기 화면으로 보낸다.
+  useEffect(() => {
+    apiClient
+      .getSetupStatus()
+      .then(({ needsSetup }) => {
+        if (needsSetup) router.replace('/setup');
+      })
+      .catch(() => {
+        // 확인에 실패해도 로그인은 시도할 수 있어야 한다.
+      });
+  }, [router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -19,9 +30,9 @@ export default function LoginPage() {
 
     try {
       const response = await apiClient.login(email, password);
-      // 로그인 응답은 userId/email만 준다. 나머지는 _app에서 /users/me로 채운다.
+      // 로그인 응답에는 토큰만 있다. 이름 등은 _app에서 /users/me로 채운다.
       login(
-        { id: response.userId, email: response.email } as User,
+        { email } as User,
         response.accessToken,
         response.refreshToken,
       );
@@ -92,21 +103,6 @@ export default function LoginPage() {
               {isLoading ? '로그인 중...' : '로그인'}
             </button>
           </form>
-
-          {/* Sign Up Link */}
-          <p className="text-center text-gray-600 text-sm mt-6">
-            계정이 없으신가요?{' '}
-            <Link href="/signup" className="text-blue-600 hover:text-blue-700 font-medium">
-              회원가입
-            </Link>
-          </p>
-        </div>
-
-        {/* Demo Credentials */}
-        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <p className="text-sm text-blue-700 font-medium mb-2">🧪 테스트 계정:</p>
-          <p className="text-xs text-blue-600">이메일: test@example.com</p>
-          <p className="text-xs text-blue-600">비밀번호: password123</p>
         </div>
       </div>
     </div>

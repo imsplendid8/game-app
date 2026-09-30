@@ -30,4 +30,6 @@
 - `status`: `OPENING_SOON` / `OPEN` / `CLOSED` / `UNKNOWN`
 - 접수 시각에는 `+09:00`을 붙여야 한국 시간으로 저장된다.
 
-반영: `POST /api/jobs/crawler/trigger` (로그인 필요) 또는 크롤 주기(6시간)를 기다린다.
+반영: 대시보드의 **지금 수집하기** 버튼을 누르거나 크롤 주기(6시간)를 기다린다.
+Docker로 실행 중이면 파일은 이미지에 들어가야 하므로, 파일을 넣은 뒤 `시작하기.bat`
+(또는 `docker compose up -d --build`)을 한 번 다시 실행한다.

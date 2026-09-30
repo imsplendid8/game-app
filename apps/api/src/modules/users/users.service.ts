@@ -146,6 +146,10 @@ export class UsersService {
     return query.orderBy('b.createdAt', 'DESC').getMany();
   }
 
+  async countUsers(): Promise<number> {
+    return this.usersRepository.count();
+  }
+
   async getAllUsers(limit: number = 100): Promise<User[]> {
     return this.usersRepository.find({
       take: limit,

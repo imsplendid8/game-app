@@ -141,7 +141,12 @@ async function main() {
   line();
   console.log('\n▶ 어댑터 매핑 결과');
   process.env.SEOUL_OPENAPI_KEY = apiKey;
-  const programs = await new SeoulPublicServiceAdapter().fetchPrograms();
+  let programs: Awaited<ReturnType<SeoulPublicServiceAdapter['fetchPrograms']>> = [];
+  try {
+    programs = await new SeoulPublicServiceAdapter().fetchPrograms();
+  } catch (error) {
+    console.log(`  ✗ ${error instanceof Error ? error.message : String(error)}`);
+  }
   console.log(`  매핑된 프로그램: ${programs.length}건`);
   if (programs.length > 0) {
     console.log('\n  매핑 예시 1건:');

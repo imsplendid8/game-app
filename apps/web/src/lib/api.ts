@@ -1,5 +1,19 @@
 import axios, { AxiosInstance } from 'axios';
 
+export interface LatestCrawl {
+  adapterName: string;
+  lastCrawl: {
+    id: string;
+    status: 'RUNNING' | 'SUCCESS' | 'PARTIAL_FAILURE' | 'FAILURE';
+    crawlStartedAt: string;
+    crawlCompletedAt: string | null;
+    programsFound: number;
+    programsCreated: number;
+    programsUpdated: number;
+    errorMessage: string | null;
+  } | null;
+}
+
 // 같은 오리진의 /api 로 보내면 next.config.js의 rewrite가 API 서버로 넘긴다.
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
@@ -36,6 +50,12 @@ class ApiClient {
   }
 
   // Auth endpoints
+  /** 계정이 하나도 없어 첫 계정을 만들어야 하는지 */
+  async getSetupStatus(): Promise<{ needsSetup: boolean }> {
+    const response = await this.client.get('/auth/setup-status');
+    return response.data;
+  }
+
   async register(email: string, password: string, profileName?: string) {
     const response = await this.client.post('/auth/register', {
       email,
@@ -238,6 +258,12 @@ class ApiClient {
 
   async getNotificationDeliveryStats() {
     const response = await this.client.get('/jobs/notification-delivery/stats');
+    return response.data;
+  }
+
+  /** 켜져 있는 수집원별 마지막 수집 결과 */
+  async getLatestCrawls(): Promise<LatestCrawl[]> {
+    const response = await this.client.get('/crawler-monitoring/latest');
     return response.data;
   }
 

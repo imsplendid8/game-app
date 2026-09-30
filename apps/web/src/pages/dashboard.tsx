@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useAuthStore } from '@/store/authStore';
 import { useBookmarkStore } from '@/store/bookmarkStore';
 import { apiClient } from '@/lib/api';
 import { MainLayout } from '@/components/layouts/MainLayout';
+import { CrawlStatusPanel } from '@/components/CrawlStatusPanel';
 import {
   dDayLabel,
   daysFromToday,
@@ -73,43 +74,42 @@ export default function DashboardPage() {
     }
   }, [isAuthenticated, isLoading, router]);
 
+  const load = useCallback(async () => {
+    setIsLoadingData(true);
+    // 하나가 실패해도 나머지는 보여준다.
+    const [bookingsResult, scheduleResult, notificationsResult] = await Promise.allSettled([
+      apiClient.getBookings(),
+      apiClient.getBookingSchedule(14),
+      apiClient.getNotifications(),
+    ]);
+
+    if (bookingsResult.status === 'fulfilled') {
+      const data = bookingsResult.value;
+      setBookings(Array.isArray(data) ? data : data?.data ?? []);
+      setBookingsError(false);
+    } else {
+      setBookingsError(true);
+    }
+
+    if (scheduleResult.status === 'fulfilled') {
+      setSchedule(Array.isArray(scheduleResult.value) ? scheduleResult.value : []);
+      setScheduleError(false);
+    } else {
+      setScheduleError(true);
+    }
+
+    if (notificationsResult.status === 'fulfilled' && Array.isArray(notificationsResult.value)) {
+      setUnreadCount(notificationsResult.value.length);
+    }
+
+    setIsLoadingData(false);
+  }, []);
+
   useEffect(() => {
     if (!isAuthenticated) return;
     hydrateBookmarks();
-
-    const load = async () => {
-      setIsLoadingData(true);
-      // 하나가 실패해도 나머지는 보여준다.
-      const [bookingsResult, scheduleResult, notificationsResult] = await Promise.allSettled([
-        apiClient.getBookings(),
-        apiClient.getBookingSchedule(14),
-        apiClient.getNotifications(),
-      ]);
-
-      if (bookingsResult.status === 'fulfilled') {
-        const data = bookingsResult.value;
-        setBookings(Array.isArray(data) ? data : data?.data ?? []);
-        setBookingsError(false);
-      } else {
-        setBookingsError(true);
-      }
-
-      if (scheduleResult.status === 'fulfilled') {
-        setSchedule(Array.isArray(scheduleResult.value) ? scheduleResult.value : []);
-        setScheduleError(false);
-      } else {
-        setScheduleError(true);
-      }
-
-      if (notificationsResult.status === 'fulfilled' && Array.isArray(notificationsResult.value)) {
-        setUnreadCount(notificationsResult.value.length);
-      }
-
-      setIsLoadingData(false);
-    };
-
     load();
-  }, [isAuthenticated, hydrateBookmarks]);
+  }, [isAuthenticated, hydrateBookmarks, load]);
 
   const upcoming = useMemo(() => selectUpcoming(bookings), [bookings]);
   const monthSpend = useMemo(() => sumMonthSpend(bookings), [bookings]);
@@ -257,7 +257,7 @@ export default function DashboardPage() {
               <p className="text-gray-600 py-8 text-center text-sm">
                 지금 확인된 접수 일정이 없어요.
                 <br />
-                크롤러가 새 프로그램을 가져오면 여기에 표시됩니다.
+                아래에서 수집을 돌리면 새 프로그램이 여기에 표시됩니다.
               </p>
             ) : (
               <ul className="divide-y divide-gray-100">
@@ -266,6 +266,8 @@ export default function DashboardPage() {
                 ))}
               </ul>
             )}
+
+            <CrawlStatusPanel onCompleted={load} />
           </section>
         </div>
       </div>

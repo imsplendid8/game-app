@@ -4,7 +4,13 @@
   "sourceRoot": "src",
   "entryFile": "main",
   "compilerOptions": {
-    "assets": [{ "include": "crawler/data/*.json", "outDir": "dist" }],
-    "watchAssets": true
+    "assets": [
+      {
+        "include": "crawler/data/*.json",
+        "outDir": "dist"
+      }
+    ],
+    "watchAssets": true,
+    "deleteOutDir": true
   }
 }

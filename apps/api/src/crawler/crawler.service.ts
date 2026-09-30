@@ -11,6 +11,8 @@ import { ScienceCenterAdapter } from './adapters/science-center.adapter';
 import { FactoryTourAdapter } from './adapters/factory-tour.adapter';
 import { BroadcastingAdapter } from './adapters/broadcasting.adapter';
 import { CrawlResult, Adapter, ExperienceData } from './adapter.interface';
+import { CrawlMonitoringService } from '@/modules/crawler/crawl-monitoring.service';
+import { CrawlStatus } from '@/modules/crawler/entities/crawl-history.entity';
 
 @Injectable()
 export class CrawlerService {
@@ -30,6 +32,7 @@ export class CrawlerService {
     private experiencesRepository: Repository<Experience>,
     @InjectRepository(ExperienceRun)
     private experienceRunsRepository: Repository<ExperienceRun>,
+    private crawlMonitoring: CrawlMonitoringService,
   ) {
     this.registerAdapter(dataLoaderAdapter);
     this.registerAdapter(seoulAdapter);
@@ -53,37 +56,7 @@ export class CrawlerService {
         this.logger.warn(`⏭️ Skipping disabled adapter: ${name}`);
         continue;
       }
-
-      try {
-        this.logger.log(`🔄 Crawling with adapter: ${name}`);
-        const programs = await adapter.fetchPrograms();
-        const { newCount, updatedCount } = await this.persistPrograms(
-          programs,
-          adapter,
-        );
-        results.push({
-          adapterName: name,
-          success: true,
-          programs,
-          newCount,
-          updatedCount,
-          crawledAt: new Date(),
-        });
-        this.logger.log(
-          `✅ ${name}: 신규 ${newCount}건, 갱신 ${updatedCount}건 저장`,
-        );
-      } catch (error) {
-        this.logger.error(`❌ Error crawling with adapter ${name}:`, error);
-        results.push({
-          adapterName: name,
-          success: false,
-          programs: [],
-          newCount: 0,
-          updatedCount: 0,
-          errors: [error instanceof Error ? error.message : 'Unknown error'],
-          crawledAt: new Date(),
-        });
-      }
+      results.push(await this.runAdapter(adapter));
     }
 
     return results;
@@ -94,22 +67,49 @@ export class CrawlerService {
     if (!adapter) {
       throw new Error(`Adapter not found: ${adapterName}`);
     }
+    return this.runAdapter(adapter);
+  }
 
-    this.logger.log(`🔄 Crawling with adapter: ${adapterName}`);
-    const programs = await adapter.fetchPrograms();
-    const { newCount, updatedCount } = await this.persistPrograms(
-      programs,
-      adapter,
-    );
+  /** 어댑터 하나를 돌려 저장하고, 결과를 crawl_history에 남긴다(앱 화면에서 보여준다). */
+  private async runAdapter(adapter: Adapter): Promise<CrawlResult> {
+    const name = adapter.metadata.name;
+    const record = await this.crawlMonitoring.startCrawl(name);
+    this.logger.log(`🔄 Crawling with adapter: ${name}`);
 
-    return {
-      adapterName,
-      success: true,
-      programs,
-      newCount,
-      updatedCount,
-      crawledAt: new Date(),
-    };
+    try {
+      const programs = await adapter.fetchPrograms();
+      const { newCount, updatedCount } = await this.persistPrograms(programs, adapter);
+      await this.crawlMonitoring.completeCrawl(record.id, CrawlStatus.SUCCESS, {
+        programsFound: programs.length,
+        programsCreated: newCount,
+        programsUpdated: updatedCount,
+      });
+      this.logger.log(`✅ ${name}: 신규 ${newCount}건, 갱신 ${updatedCount}건 저장`);
+      return {
+        adapterName: name,
+        success: true,
+        programs,
+        newCount,
+        updatedCount,
+        crawledAt: new Date(),
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(`❌ ${name}: ${message}`);
+      await this.crawlMonitoring.completeCrawl(record.id, CrawlStatus.FAILURE, {
+        errorMessage: message,
+        errorStacktrace: error instanceof Error ? error.stack : undefined,
+      });
+      return {
+        adapterName: name,
+        success: false,
+        programs: [],
+        newCount: 0,
+        updatedCount: 0,
+        errors: [message],
+        crawledAt: new Date(),
+      };
+    }
   }
 
   /**

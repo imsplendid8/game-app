@@ -18,8 +18,14 @@ import { JwtPayload } from './auth.service';
 export class AuthController {
   constructor(private authService: AuthService) {}
 
+  @Get('setup-status')
+  @ApiOperation({ summary: '처음 계정을 만들어야 하는 상태인지' })
+  async getSetupStatus(): Promise<{ needsSetup: boolean }> {
+    return { needsSetup: await this.authService.needsSetup() };
+  }
+
   @Post('register')
-  @ApiOperation({ summary: 'Register a new user' })
+  @ApiOperation({ summary: 'Register a new user (첫 계정만 허용)' })
   async register(
     @Body()
     body: {

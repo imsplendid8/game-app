@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import axios from 'axios';
 import { ExperienceData, CrawlSchedule } from '../adapter.interface';
 import { BaseAdapter } from './base.adapter';
 
@@ -15,6 +16,11 @@ export const SEOUL_SERVICES = [
   'ListPublicReservationEducation',
   'ListPublicReservationCulture',
 ] as const;
+
+const SERVICE_LABELS: Record<(typeof SEOUL_SERVICES)[number], string> = {
+  ListPublicReservationEducation: '교육체험',
+  ListPublicReservationCulture: '문화행사',
+};
 
 export const SEOUL_BASE_URL = 'http://openapi.seoul.go.kr:8088';
 
@@ -86,28 +92,40 @@ export class SeoulPublicServiceAdapter extends BaseAdapter {
   }
 
   async fetchPrograms(): Promise<ExperienceData[]> {
-    const apiKey = process.env.SEOUL_OPENAPI_KEY;
+    const apiKey = process.env.SEOUL_OPENAPI_KEY?.trim();
     if (!apiKey) {
-      this.logger.warn(
-        'SEOUL_OPENAPI_KEY가 설정되지 않아 서울 공공서비스예약 크롤을 건너뜁니다. ' +
-          'https://data.seoul.go.kr 에서 인증키를 발급받아 .env에 넣어주세요.',
+      // 앱 화면의 "마지막 수집 결과"에 그대로 보인다.
+      throw new Error(
+        '서울시 인증키(SEOUL_OPENAPI_KEY)가 .env에 없습니다. data.seoul.go.kr에서 발급받아 넣어주세요.',
       );
-      return [];
     }
 
     const programs: ExperienceData[] = [];
+    const errors: string[] = [];
 
     for (const service of SEOUL_SERVICES) {
       try {
         programs.push(...(await this.fetchService(apiKey, service)));
       } catch (error) {
-        this.logger.error(
-          `${service} 조회 실패: ${error instanceof Error ? error.message : String(error)}`,
-        );
+        const message = this.describeError(error);
+        errors.push(`${SERVICE_LABELS[service]}: ${message}`);
+        this.logger.error(`${service} 조회 실패: ${message}`);
       }
     }
 
+    // 전부 실패했을 때만 실패로 본다. 하나라도 받았으면 받은 것은 저장한다.
+    if (errors.length === SEOUL_SERVICES.length) {
+      throw new Error(errors.join(' / '));
+    }
+
     return programs;
+  }
+
+  private describeError(error: unknown): string {
+    if (axios.isAxiosError(error) && !error.response) {
+      return `서울시 서버에 연결하지 못했습니다 (${error.message})`;
+    }
+    return error instanceof Error ? error.message : String(error);
   }
 
   private async fetchService(
@@ -142,9 +160,9 @@ export class SeoulPublicServiceAdapter extends BaseAdapter {
         .filter((program): program is ExperienceData => program !== null);
 
       if (rows.length > 0 && mapped.length === 0) {
-        // 필드명이 바뀌면 조용히 0건이 되므로 실제 키를 남겨 원인을 바로 알 수 있게 한다.
-        this.logger.warn(
-          `${service}: ${rows.length}건을 받았지만 매핑된 항목이 없습니다. 응답 필드: ${Object.keys(rows[0]).join(', ')}`,
+        // 필드명이 바뀌면 조용히 0건이 되므로 실제 필드를 남겨 원인을 바로 알 수 있게 한다.
+        throw new Error(
+          `${rows.length}건을 받았지만 응답 형식이 예상과 달라 읽지 못했습니다. 받은 필드: ${Object.keys(rows[0]).join(', ')}`,
         );
       }
 

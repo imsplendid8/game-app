@@ -80,6 +80,21 @@ export class CrawlMonitoringService {
     await this.adapterStateRepository.save(adapterState);
   }
 
+  /** 어댑터마다 가장 최근 수집 기록 하나. 한 번도 돌지 않았으면 null. */
+  async getLatestCrawls(
+    adapterNames: string[],
+  ): Promise<Array<{ adapterName: string; lastCrawl: CrawlHistory | null }>> {
+    return Promise.all(
+      adapterNames.map(async (adapterName) => ({
+        adapterName,
+        lastCrawl: await this.crawlHistoryRepository.findOne({
+          where: { adapterName },
+          order: { crawlStartedAt: 'DESC' },
+        }),
+      })),
+    );
+  }
+
   async getCrawlHistory(
     adapterName: string,
     limit: number = 100,

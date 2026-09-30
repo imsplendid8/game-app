@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
@@ -28,6 +28,9 @@ export class AuthService {
     password: string,
     profileName?: string,
   ): Promise<{ userId: string; email: string; accessToken: string }> {
+    if (!(await this.isRegistrationOpen())) {
+      throw new ForbiddenException('이미 계정이 있습니다. 로그인해 주세요.');
+    }
     const passwordHash = await this.hashPassword(password);
     const user = await this.usersService.createUser(email, profileName, undefined);
 
@@ -39,6 +42,20 @@ export class AuthService {
       email: user.email,
       accessToken: tokens.accessToken,
     };
+  }
+
+  /**
+   * 혼자 쓰는 앱이라 첫 계정 하나만 가입을 받는다. 터널로 공개돼도 남이 가입할 수 없다.
+   * 계정을 더 만들어야 하면 ALLOW_REGISTRATION=true 로 잠시 연다.
+   */
+  async isRegistrationOpen(): Promise<boolean> {
+    if (process.env.ALLOW_REGISTRATION === 'true') return true;
+    return this.needsSetup();
+  }
+
+  /** 계정이 하나도 없어 첫 계정을 만들어야 하는 상태인지 */
+  async needsSetup(): Promise<boolean> {
+    return (await this.usersService.countUsers()) === 0;
   }
 
   async login(email: string, password: string): Promise<AuthToken> {

@@ -49,11 +49,11 @@ describe('SeoulPublicServiceAdapter', () => {
     if (originalKey === undefined) delete process.env.SEOUL_OPENAPI_KEY;
   });
 
-  it('인증키가 없으면 호출하지 않고 빈 배열을 돌려준다', async () => {
+  it('인증키가 없으면 호출하지 않고 이유를 담아 실패한다', async () => {
     delete process.env.SEOUL_OPENAPI_KEY;
     const { adapter, get } = buildAdapter({});
 
-    await expect(adapter.fetchPrograms()).resolves.toEqual([]);
+    await expect(adapter.fetchPrograms()).rejects.toThrow('SEOUL_OPENAPI_KEY');
     expect(get).not.toHaveBeenCalled();
   });
 
@@ -120,12 +120,56 @@ describe('SeoulPublicServiceAdapter', () => {
     expect(programs[0].externalId).toBe('S240101000000001');
   });
 
-  it('인증키 오류 응답은 해당 서비스만 건너뛰고 크롤을 이어간다', async () => {
+  it('모든 서비스가 실패하면 서비스별 원인을 담아 실패한다', async () => {
     process.env.SEOUL_OPENAPI_KEY = 'bad-key';
     const { adapter } = buildAdapter({
       RESULT: { CODE: 'INFO-100', MESSAGE: '인증키가 유효하지 않습니다.' },
     });
 
-    await expect(adapter.fetchPrograms()).resolves.toEqual([]);
+    const error = await adapter.fetchPrograms().catch((e: Error) => e);
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toContain('교육체험: ');
+    expect((error as Error).message).toContain('문화행사: ');
+    expect((error as Error).message).toContain('인증키가 유효하지 않습니다');
+  });
+
+  it('한 서비스만 실패하면 받은 것은 돌려준다', async () => {
+    process.env.SEOUL_OPENAPI_KEY = 'test-key';
+    const { adapter, get } = buildAdapter({});
+    get.mockImplementation(async (url: string) =>
+      url.includes('ListPublicReservationEducation')
+        ? {
+            data: {
+              ListPublicReservationEducation: {
+                list_total_count: 1,
+                RESULT: { CODE: 'INFO-000' },
+                row: [educationRow],
+              },
+            },
+          }
+        : { data: { RESULT: { CODE: 'ERROR-500', MESSAGE: '서버 오류' } } },
+    );
+
+    const programs = await adapter.fetchPrograms();
+    expect(programs.map((p) => p.externalId)).toEqual(['S240101000000001']);
+  });
+
+  it('행은 받았는데 형식이 달라 하나도 못 읽으면 받은 필드를 알려준다', async () => {
+    process.env.SEOUL_OPENAPI_KEY = 'test-key';
+    const { adapter, get } = buildAdapter({});
+    get.mockImplementation(async (url: string) => {
+      const service = url.split('/')[3];
+      return {
+        data: {
+          [service]: {
+            list_total_count: 1,
+            RESULT: { CODE: 'INFO-000' },
+            row: [{ SERVICE_ID: 'x', SERVICE_NAME: 'y' }],
+          },
+        },
+      };
+    });
+
+    await expect(adapter.fetchPrograms()).rejects.toThrow('받은 필드: SERVICE_ID, SERVICE_NAME');
   });
 });

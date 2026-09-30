@@ -24,6 +24,9 @@ function canConnect(host: string, port: number, timeoutMs = 2000): Promise<boole
   });
 }
 
+// 가입은 원래 첫 계정만 받는다. 이 테스트는 이미 계정이 있는 DB에서도 사용자 둘을 만든다.
+process.env.ALLOW_REGISTRATION = 'true';
+
 describe('App (e2e)', () => {
   const runId = Date.now();
   const ownerEmail = `e2e-owner-${runId}@example.com`;
@@ -123,6 +126,12 @@ describe('App (e2e)', () => {
   it('GET /health 가 응답한다', async () => {
     const { status } = await api('GET', '/health');
     expect(status).toBe(200);
+  });
+
+  it('첫 설정 필요 여부를 로그인 없이 알려준다', async () => {
+    const { status, body } = await api('GET', '/api/auth/setup-status');
+    expect(status).toBe(200);
+    expect(typeof body.needsSetup).toBe('boolean');
   });
 
   it('로그인 없이 예약 목록을 볼 수 없다', async () => {
