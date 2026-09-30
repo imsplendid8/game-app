@@ -21,6 +21,15 @@ export interface StaticProgram {
   ageGroup: string | null;
   /** 참여 대상 원문. 웹에서 아이별 참여 가능 여부를 판단한다 */
   targetInfo: string | null;
+  /** 이용 기간 (YYYY-MM-DD, 한국 날짜) */
+  serviceStartDate: string | null;
+  serviceEndDate: string | null;
+  category: string | null;
+  area: string | null;
+  paymentInfo: string | null;
+  imageUrl: string | null;
+  contact: string | null;
+  statusLabel: string | null;
   targetAgeMin: number | null;
   targetAgeMax: number | null;
   bookingMethod: ExperienceData['bookingMethod'];
@@ -77,6 +86,14 @@ export function toStaticProgram(program: ExperienceData): StaticProgram {
     price: program.price ?? null,
     ageGroup: program.ageGroup ?? null,
     targetInfo: program.targetInfo ?? null,
+    serviceStartDate: experienceDate ? toSeoulYmd(experienceDate) : null,
+    serviceEndDate: valid(program.serviceEndAt) ? toSeoulYmd(program.serviceEndAt as Date) : null,
+    category: program.category ?? null,
+    area: program.area ?? null,
+    paymentInfo: program.paymentInfo ?? null,
+    imageUrl: program.imageUrl ?? null,
+    contact: program.contact ?? null,
+    statusLabel: program.statusLabel ?? null,
     targetAgeMin: ages.min,
     targetAgeMax: ages.max,
     bookingMethod: program.bookingMethod,

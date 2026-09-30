@@ -1,4 +1,4 @@
-import { decodeHtml, SeoulPublicServiceAdapter } from './seoul-public-service.adapter';
+import { decodeHtml, htmlToText, SeoulPublicServiceAdapter } from './seoul-public-service.adapter';
 
 /**
  * 서울 열린데이터광장 공공서비스예약 API 응답 형태를 고정해 두고 매핑을 검증한다.
@@ -81,8 +81,13 @@ describe('SeoulPublicServiceAdapter', () => {
       ageGroup: '3-6',
       bookingMethod: 'FIRST_COME',
       externalSource: 'ListPublicReservationEducation',
+      category: '교육체험 > 문화교양',
+      area: '노원구',
+      paymentInfo: '유료',
+      statusLabel: '접수중',
     });
     expect(program!.experienceDate).toEqual(new Date('2026-09-26T00:00:00'));
+    expect(program!.serviceEndAt).toEqual(new Date('2026-09-26T00:00:00'));
     expect(program!.bookingOpenAt).toEqual(new Date('2026-09-01T10:00:00'));
     expect(program!.bookingCloseAt).toEqual(new Date('2026-09-20T18:00:00'));
   });
@@ -180,5 +185,16 @@ describe('decodeHtml', () => {
     );
     expect(decodeHtml('&unknown; 그대로')).toBe('&unknown; 그대로');
     expect(decodeHtml(undefined)).toBe('');
+  });
+});
+
+describe('htmlToText', () => {
+  it('상세 설명 HTML을 줄바꿈 있는 글로 바꾼다', () => {
+    expect(
+      htmlToText(
+        '<p>1. 이용 안내</p><p>&nbsp;</p><p>준비물: 물&middot;모자<br/>우천 시 취소</p><div><strong>문의</strong> 02-000</div>'
+      )
+    ).toBe('1. 이용 안내\n\n준비물: 물·모자\n우천 시 취소\n문의 02-000');
+    expect(htmlToText(undefined)).toBe('');
   });
 });

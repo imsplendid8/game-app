@@ -5,21 +5,19 @@ import { useBookmarkStore } from '@/store/bookmarkStore';
 import { apiClient } from '@/lib/api';
 import { MainLayout } from '@/components/layouts/MainLayout';
 import { EligibilityBadges } from '@/components/EligibilityBadges';
+import {
+  ProgramBadges,
+  ProgramImage,
+  ProgramSchedule,
+  type SeoulProgramFields,
+} from '@/components/ProgramInfo';
 import { STATIC_MODE } from '@/lib/staticMode';
 import { getChildren } from '@/lib/children';
 import type { Child, EligibilityFilter, ProgramEligibility } from '@/lib/eligibility';
 import Link from 'next/link';
-import {
-  FiSearch,
-  FiFilter,
-  FiDollarSign,
-  FiUsers,
-  FiBookmark,
-  FiStar,
-  FiCalendar,
-} from 'react-icons/fi';
+import { FiSearch, FiFilter, FiDollarSign, FiUsers, FiBookmark, FiStar } from 'react-icons/fi';
 
-interface Experience {
+interface Experience extends SeoulProgramFields {
   id: string;
   programName: string;
   institution: {
@@ -50,7 +48,9 @@ export default function ExperiencesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedAgeGroup, setSelectedAgeGroup] = useState<string | null>(null);
   const [minRating, setMinRating] = useState(0);
-  const [sortBy, setSortBy] = useState<'recent' | 'price-low' | 'price-high' | 'name'>('recent');
+  const [sortBy, setSortBy] = useState<'recent' | 'closing' | 'price-low' | 'price-high' | 'name'>(
+    'recent'
+  );
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -181,7 +181,11 @@ export default function ExperiencesPage() {
         {/* Page Header */}
         <div>
           <h1 className="text-3xl font-bold text-gray-900">프로그램 둘러보기</h1>
-          <p className="text-gray-600 mt-2">아이들을 위한 다양한 경험 프로그램을 찾아보세요</p>
+          <p className="text-gray-600 mt-2">
+            {STATIC_MODE
+              ? '서울시 공공서비스예약(교육체험·문화행사)에 올라온 프로그램이에요'
+              : '아이들을 위한 다양한 경험 프로그램을 찾아보세요'}
+          </p>
         </div>
 
         {/* Search and Filter Bar */}
@@ -211,24 +215,36 @@ export default function ExperiencesPage() {
               }}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
             >
-              <option value="recent">최신순</option>
-              <option value="price-low">가격 낮음</option>
-              <option value="price-high">가격 높음</option>
-              <option value="name">이름순</option>
+              {STATIC_MODE ? (
+                <>
+                  <option value="recent">최근 접수 시작순</option>
+                  <option value="closing">접수 마감 임박순</option>
+                  <option value="name">이름순</option>
+                </>
+              ) : (
+                <>
+                  <option value="recent">최신순</option>
+                  <option value="price-low">가격 낮음</option>
+                  <option value="price-high">가격 높음</option>
+                  <option value="name">이름순</option>
+                </>
+              )}
             </select>
           </div>
 
-          {/* Advanced Filters Toggle */}
-          <button
-            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-            className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium text-gray-700"
-          >
-            <FiFilter size={18} />
-            {showAdvancedFilters ? '필터 숨기기' : '고급 필터'}
-          </button>
+          {/* Advanced Filters Toggle (평점은 서버 모드에만) */}
+          {!STATIC_MODE && (
+            <button
+              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+              className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium text-gray-700"
+            >
+              <FiFilter size={18} />
+              {showAdvancedFilters ? '필터 숨기기' : '고급 필터'}
+            </button>
+          )}
 
           {/* Advanced Filters */}
-          {showAdvancedFilters && (
+          {!STATIC_MODE && showAdvancedFilters && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 space-y-6">
               {/* Minimum Rating */}
               <div>
@@ -321,19 +337,27 @@ export default function ExperiencesPage() {
                 key={exp.id}
                 className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow overflow-hidden"
               >
-                {/* Placeholder Image */}
-                <div className="w-full h-48 bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center text-blue-400">
-                  <FiCalendar size={64} />
-                </div>
+                <ProgramImage src={exp.imageUrl} alt={exp.programName} className="w-full h-48" />
 
                 {/* Content */}
                 <div className="p-4">
+                  {STATIC_MODE && (
+                    <div className="mb-2">
+                      <ProgramBadges program={exp} />
+                    </div>
+                  )}
                   <h3 className="font-bold text-gray-900 mb-1 line-clamp-2">{exp.programName}</h3>
                   <p className="text-sm text-gray-600 mb-3">{exp.institution.institutionName}</p>
 
+                  {STATIC_MODE && (
+                    <div className="mb-3">
+                      <ProgramSchedule program={exp} />
+                    </div>
+                  )}
+
                   {/* Details */}
                   <div className="space-y-1 mb-3 text-sm text-gray-600">
-                    {exp.price !== undefined && (
+                    {!STATIC_MODE && exp.price !== undefined && (
                       <div className="flex items-center gap-2">
                         <FiDollarSign size={16} />
                         {exp.price.toLocaleString()}원
@@ -351,13 +375,15 @@ export default function ExperiencesPage() {
                     <EligibilityBadges targetInfo={exp.targetInfo} eligibility={exp.eligibility} />
                   </div>
 
-                  {/* Rating */}
-                  <div className="flex items-center gap-2 mb-4">
-                    <FiStar size={16} className="text-yellow-400 fill-yellow-400" />
-                    <span className="font-semibold text-gray-900">
-                      {ratings[exp.id]?.toFixed(1) || 'N/A'}
-                    </span>
-                  </div>
+                  {/* Rating (서버 모드: 후기 평점) */}
+                  {!STATIC_MODE && (
+                    <div className="flex items-center gap-2 mb-4">
+                      <FiStar size={16} className="text-yellow-400 fill-yellow-400" />
+                      <span className="font-semibold text-gray-900">
+                        {ratings[exp.id]?.toFixed(1) || 'N/A'}
+                      </span>
+                    </div>
+                  )}
 
                   {/* Actions */}
                   <div className="flex gap-2">

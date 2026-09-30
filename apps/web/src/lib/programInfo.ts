@@ -1,0 +1,83 @@
+import { formatMonthDay, formatTime } from './bookingDates';
+
+/**
+ * 서울시 공공서비스예약 정보(이용기간·접수기간·상태)를 화면 문구로 바꾼다.
+ * 상시 프로그램은 이용 시작일이 몇 년 전(예: 2015년)인 경우가 많아 그대로 보여주면 헷갈린다.
+ */
+
+const dot = (ymd: string) => ymd.replace(/-/g, '.');
+
+/** 이용 기간. 이미 시작했으면 "상시 운영 · ~끝"으로 */
+export function servicePeriodLabel(
+  start: string | null | undefined,
+  end: string | null | undefined,
+  now: Date = new Date()
+): string | null {
+  if (!start && !end) return null;
+  const todayYmd = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, '0'),
+    String(now.getDate()).padStart(2, '0'),
+  ].join('-');
+
+  if (start && start <= todayYmd) {
+    if (!end) return '운영 중';
+    if (end < todayYmd) return `운영 종료 (${dot(end)})`;
+    return `운영 중 · ${dot(end)}까지`;
+  }
+  if (start && end && start !== end) return `${dot(start)} ~ ${dot(end)}`;
+  return dot((start ?? end) as string);
+}
+
+/** 접수 기간 한 줄 요약 */
+export function bookingWindowLabel(
+  openAt: string | null | undefined,
+  closeAt: string | null | undefined,
+  now: Date = new Date()
+): string | null {
+  const open = openAt ? new Date(openAt) : null;
+  const close = closeAt ? new Date(closeAt) : null;
+  const at = (d: Date) => `${formatMonthDay(d)} ${formatTime(d)}`;
+
+  if (open && open > now) return `${at(open)} 접수 시작`;
+  if (close && close < now) return `접수 마감 (${formatMonthDay(close)})`;
+  if (close) return `${at(close)} 접수 마감`;
+  if (open) return '접수 중';
+  return null;
+}
+
+/** 접수 기간 전체 (상세 화면) */
+export function bookingRangeLabel(
+  openAt: string | null | undefined,
+  closeAt: string | null | undefined
+): string | null {
+  if (!openAt && !closeAt) return null;
+  const fmt = (iso: string) => {
+    const d = new Date(iso);
+    return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(
+      d.getDate()
+    ).padStart(2, '0')} ${formatTime(d)}`;
+  };
+  return `${openAt ? fmt(openAt) : ''} ~ ${closeAt ? fmt(closeAt) : ''}`.trim();
+}
+
+export type StatusTone = 'open' | 'soon' | 'closed' | 'unknown';
+
+/** 서울시 상태 이름(접수중/안내중/예약마감/접수종료…)의 색 */
+export function statusTone(statusLabel: string | null | undefined, status?: string): StatusTone {
+  const label = statusLabel ?? '';
+  if (/접수중|예약가능/.test(label) || (!label && status === 'OPEN')) return 'open';
+  if (/안내중|예정/.test(label) || (!label && status === 'OPENING_SOON')) return 'soon';
+  if (/마감|종료|만료|취소/.test(label) || (!label && status === 'CLOSED')) return 'closed';
+  return 'unknown';
+}
+
+/** GitHub Pages(https)에서 http 이미지는 막히므로 https로 */
+export function safeImageUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  const trimmed = url.trim();
+  if (/^https:\/\//i.test(trimmed)) return trimmed;
+  if (/^http:\/\//i.test(trimmed)) return trimmed.replace(/^http:/i, 'https:');
+  if (trimmed.startsWith('//')) return `https:${trimmed}`;
+  return null;
+}

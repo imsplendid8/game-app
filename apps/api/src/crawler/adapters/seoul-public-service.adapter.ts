@@ -43,6 +43,12 @@ export const SEOUL_ROW_FIELDS = [
   'RCPTBGNDT',
   'RCPTENDDT',
   'SVCOPNBGNDT',
+  'SVCOPNENDDT',
+  'AREANM',
+  'MAXCLASSNM',
+  'MINCLASSNM',
+  'IMGURL',
+  'TELNO',
 ] as const;
 
 /** 이 필드가 없으면 행 자체를 매핑할 수 없다 */
@@ -64,6 +70,8 @@ interface SeoulReservationRow {
   AREANM?: string;
   MAXCLASSNM?: string;
   MINCLASSNM?: string;
+  IMGURL?: string;
+  TELNO?: string;
 }
 
 interface SeoulServiceBody {
@@ -179,15 +187,23 @@ export class SeoulPublicServiceAdapter extends BaseAdapter {
       externalId: row.SVCID,
       institutionName: decodeHtml(row.PLACENM) || '서울시 공공서비스예약',
       programName: decodeHtml(row.SVCNM),
-      description: decodeHtml(row.DTLCONT) || undefined,
+      description: htmlToText(row.DTLCONT) || undefined,
       programUrl: row.SVCURL || undefined,
       bookingUrl: row.SVCURL || undefined,
       experienceDate: this.parseSeoulDate(row.SVCOPNBGNDT),
+      serviceEndAt: this.parseSeoulDate(row.SVCOPNENDDT),
       bookingOpenAt: this.parseSeoulDate(row.RCPTBGNDT),
       bookingCloseAt: this.parseSeoulDate(row.RCPTENDDT),
       price: row.PAYATNM?.includes('무료') ? 0 : undefined,
       ageGroup: this.getAgeGroup(row.USETGTINFO ?? '') || undefined,
       targetInfo: decodeHtml(row.USETGTINFO) || undefined,
+      category:
+        [row.MAXCLASSNM, row.MINCLASSNM].map(decodeHtml).filter(Boolean).join(' > ') || undefined,
+      area: decodeHtml(row.AREANM) || undefined,
+      paymentInfo: decodeHtml(row.PAYATNM) || undefined,
+      imageUrl: row.IMGURL?.trim() || undefined,
+      contact: decodeHtml(row.TELNO) || undefined,
+      statusLabel: decodeHtml(row.SVCSTATNM) || undefined,
       bookingMethod: 'FIRST_COME',
       status: this.mapStatus(row.SVCSTATNM),
       externalSource: service,
@@ -233,5 +249,20 @@ export function decodeHtml(value?: string): string {
     .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
     .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(Number(dec)))
     .replace(/&([a-z]+);/gi, (match, name) => NAMED_ENTITIES[name.toLowerCase()] ?? match)
+    .trim();
+}
+
+/** 상세 설명(DTLCONT)은 HTML이다. 줄바꿈만 살리고 태그를 걷어낸 글로 바꾼다 */
+export function htmlToText(value?: string): string {
+  if (!value) return '';
+  const text = value
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|li|h\d|tr)>/gi, '\n')
+    .replace(/<[^>]+>/g, '');
+  return decodeHtml(text)
+    .split('\n')
+    .map((line) => line.replace(/[ \t\u00a0]+/g, ' ').trim())
+    .filter((line, i, lines) => line || (i > 0 && lines[i - 1]))
+    .join('\n')
     .trim();
 }

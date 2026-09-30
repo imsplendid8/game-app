@@ -33,6 +33,15 @@ interface StaticProgram {
   ageGroup: string | null;
   /** 기관이 적은 참여 대상 원문 (예전 파일에는 없을 수 있다) */
   targetInfo?: string | null;
+  // 서울시 공공서비스예약 상세 (예전 파일에는 없을 수 있다)
+  serviceStartDate?: string | null;
+  serviceEndDate?: string | null;
+  category?: string | null;
+  area?: string | null;
+  paymentInfo?: string | null;
+  imageUrl?: string | null;
+  contact?: string | null;
+  statusLabel?: string | null;
   targetAgeMin: number | null;
   targetAgeMax: number | null;
   bookingMethod: string;
@@ -248,6 +257,14 @@ function toExperience(
     bookingCloseAt: program.bookingCloseAt,
     status: program.status,
     targetInfo: program.targetInfo ?? null,
+    serviceStartDate: program.serviceStartDate ?? program.experienceDate,
+    serviceEndDate: program.serviceEndDate ?? null,
+    category: program.category ?? null,
+    area: program.area ?? null,
+    paymentInfo: program.paymentInfo ?? null,
+    imageUrl: program.imageUrl ?? null,
+    contact: program.contact ?? null,
+    statusLabel: program.statusLabel ?? null,
     eligibility: eligibilityOf(program, children, today),
   };
 }
@@ -367,8 +384,14 @@ export class LocalApiClient implements ApiClientContract {
       case 'name':
         list = [...list].sort((a, b) => a.programName.localeCompare(b.programName, 'ko'));
         break;
+      case 'closing': {
+        // 접수 마감이 가까운 것부터 (마감일 없는 것은 뒤로)
+        const key = (p: StaticProgram) => p.bookingCloseAt ?? '9999';
+        list = [...list].sort((a, b) => key(a).localeCompare(key(b)));
+        break;
+      }
       default:
-        // 최신순: 접수가 가까운 것부터
+        // 최신순: 최근에 접수를 시작한(또는 시작할) 것부터
         list = [...list].sort((a, b) =>
           (b.bookingOpenAt ?? '').localeCompare(a.bookingOpenAt ?? '')
         );
