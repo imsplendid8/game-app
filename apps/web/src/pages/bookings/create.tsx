@@ -28,6 +28,7 @@ export default function BookingCreatePage() {
   const [isSubmitting, setIsSubmitting] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [bookingId, setBookingId] = useState<string | null>(null);
+  const [confirmationNumber, setConfirmationNumber] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -119,6 +120,7 @@ export default function BookingCreatePage() {
       });
 
       setBookingId(booking.id);
+      setConfirmationNumber(booking.confirmationNumber || null);
       setStep('success');
     } catch (err) {
       console.error('예약 생성 실패:', err);
@@ -155,7 +157,7 @@ export default function BookingCreatePage() {
           <div className="text-center space-y-6 py-12">
             <div className="text-6xl">✅</div>
             <h1 className="text-2xl font-bold text-gray-900">예약이 완료되었습니다!</h1>
-            <p className="text-gray-600">예약 번호: {bookingId}</p>
+            <p className="text-gray-600">예약 번호: {confirmationNumber || bookingId}</p>
             <div className="flex gap-4 justify-center">
               <button
                 onClick={() => router.push(`/bookings/${bookingId}`)}
@@ -182,7 +184,7 @@ export default function BookingCreatePage() {
               <div className="space-y-2">
                 <p className="font-bold text-gray-900">{experience.programName}</p>
                 <p className="text-gray-600">{experience.institution.institutionName}</p>
-                {experience.price && (
+                {!!experience.price && (
                   <p className="text-gray-600">가격: {experience.price.toLocaleString()}원</p>
                 )}
               </div>
@@ -190,7 +192,10 @@ export default function BookingCreatePage() {
 
             {/* Experience Date */}
             <div className="bg-white rounded-lg shadow p-6">
-              <label htmlFor="experienceDate" className="block text-lg font-bold text-gray-900 mb-4">
+              <label
+                htmlFor="experienceDate"
+                className="block text-lg font-bold text-gray-900 mb-4"
+              >
                 체험 날짜
               </label>
               <input
@@ -198,7 +203,9 @@ export default function BookingCreatePage() {
                 type="date"
                 required
                 value={formData.experienceDate}
-                onChange={(e) => setFormData((prev) => ({ ...prev, experienceDate: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, experienceDate: e.target.value }))
+                }
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg"
               />
             </div>
@@ -220,7 +227,10 @@ export default function BookingCreatePage() {
                       value={child.age}
                       onChange={(e) => {
                         const newChildren = [...formData.selectedChildren];
-                        newChildren[index] = { ...newChildren[index], age: parseInt(e.target.value) };
+                        newChildren[index] = {
+                          ...newChildren[index],
+                          age: parseInt(e.target.value),
+                        };
                         setFormData((prev) => ({ ...prev, selectedChildren: newChildren }));
                       }}
                       className="px-4 py-2 border border-gray-300 rounded-lg"
@@ -253,17 +263,20 @@ export default function BookingCreatePage() {
               <h2 className="text-lg font-bold text-gray-900 mb-4">특별 요청사항</h2>
               <textarea
                 value={formData.specialRequests}
-                onChange={(e) => setFormData((prev) => ({ ...prev, specialRequests: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, specialRequests: e.target.value }))
+                }
                 placeholder="특별한 요청사항이 있으신가요? (선택사항)"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg h-24"
               />
             </div>
 
             {/* Total Price */}
-            {experience.price && (
+            {!!experience.price && (
               <div className="bg-blue-50 rounded-lg p-6">
                 <div className="text-lg font-bold text-gray-900">
-                  예상 총액: {(experience.price * formData.selectedChildren.length).toLocaleString()}원
+                  예상 총액:{' '}
+                  {(experience.price * formData.selectedChildren.length).toLocaleString()}원
                 </div>
               </div>
             )}

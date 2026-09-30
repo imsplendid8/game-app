@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useAuthStore } from '@/store/authStore';
 import { apiClient } from '@/lib/api';
+import { STATIC_MODE } from '@/lib/staticMode';
 import { FiMenu, FiX, FiBell, FiLogOut } from 'react-icons/fi';
 
 interface MainLayoutProps {
@@ -99,14 +100,16 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 {mobileMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
               </button>
 
-              {/* Logout button */}
-              <button
-                onClick={handleLogout}
-                className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors duration-200"
-                title="로그아웃"
-              >
-                <FiLogOut size={20} />
-              </button>
+              {/* Logout button (로그인이 없는 정적 배포에서는 숨긴다) */}
+              {!STATIC_MODE && (
+                <button
+                  onClick={handleLogout}
+                  className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors duration-200"
+                  title="로그아웃"
+                >
+                  <FiLogOut size={20} />
+                </button>
+              )}
             </div>
           </div>
 

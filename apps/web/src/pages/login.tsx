@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuthStore, type User } from '@/store/authStore';
 import { apiClient } from '@/lib/api';
+import { STATIC_MODE } from '@/lib/staticMode';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -13,6 +14,11 @@ export default function LoginPage() {
 
   // 계정이 하나도 없으면 첫 계정 만들기 화면으로 보낸다.
   useEffect(() => {
+    // 서버 없는 배포에는 로그인이 없다
+    if (STATIC_MODE) {
+      router.replace('/dashboard');
+      return;
+    }
     apiClient
       .getSetupStatus()
       .then(({ needsSetup }) => {

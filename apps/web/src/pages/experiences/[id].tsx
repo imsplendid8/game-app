@@ -11,6 +11,7 @@ import {
   FiAlertCircle,
   FiUsers,
   FiDollarSign,
+  FiCalendar,
 } from 'react-icons/fi';
 
 interface Experience {
@@ -121,9 +122,10 @@ export default function ExperienceDetailPage() {
           name: experience.programName,
           institution: experience.institution.institutionName,
           price: Number(experience.price) || 0,
-          ageGroup: experience.targetAgeMin && experience.targetAgeMax
-            ? `${Number(experience.targetAgeMin)}-${Number(experience.targetAgeMax)}`
-            : '',
+          ageGroup:
+            experience.targetAgeMin && experience.targetAgeMax
+              ? `${Number(experience.targetAgeMin)}-${Number(experience.targetAgeMax)}`
+              : '',
           rating: rating,
           bookmarkedAt: new Date().toISOString(),
         });
@@ -152,9 +154,7 @@ export default function ExperienceDetailPage() {
 
         {/* Image Gallery */}
         <div className="relative bg-gradient-to-br from-blue-100 to-blue-50 rounded-lg overflow-hidden aspect-video flex items-center justify-center text-blue-400">
-          <svg width="120" height="120" viewBox="0 0 80 80" fill="currentColor">
-            <path d="M40 0C17.9 0 0 17.9 0 40s17.9 40 40 40 40-17.9 40-40S62.1 0 40 0zm0 72c-17.6 0-32-14.4-32-32s14.4-32 32-32 32 14.4 32 32-14.4 32-32 32z" />
-          </svg>
+          <FiCalendar size={96} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -171,9 +171,7 @@ export default function ExperienceDetailPage() {
                   onClick={handleBookmark}
                   disabled={isBookmarkLoading}
                   className={`p-3 rounded-lg transition-colors ${
-                    bookmarked
-                      ? 'bg-blue-100 hover:bg-blue-200'
-                      : 'bg-gray-100 hover:bg-gray-200'
+                    bookmarked ? 'bg-blue-100 hover:bg-blue-200' : 'bg-gray-100 hover:bg-gray-200'
                   }`}
                 >
                   <FiBookmark
@@ -198,9 +196,7 @@ export default function ExperienceDetailPage() {
                         }
                       />
                     ))}
-                    <span className="ml-2 font-semibold text-gray-900">
-                      {rating.toFixed(1)}
-                    </span>
+                    <span className="ml-2 font-semibold text-gray-900">{rating.toFixed(1)}</span>
                   </div>
                 </div>
 
@@ -227,7 +223,9 @@ export default function ExperienceDetailPage() {
                   <FiUsers className="text-blue-600" size={24} />
                   <div>
                     <p className="font-semibold text-gray-900">추천 연령</p>
-                    <p className="text-blue-600 font-medium">{experience.targetAgeMin}세 ~ {experience.targetAgeMax}세</p>
+                    <p className="text-blue-600 font-medium">
+                      {experience.targetAgeMin}세 ~ {experience.targetAgeMax}세
+                    </p>
                   </div>
                 </div>
               </div>
@@ -256,7 +254,9 @@ export default function ExperienceDetailPage() {
                 {experience.targetAgeMin && experience.targetAgeMax && (
                   <div className="flex items-center gap-2 text-sm text-gray-700">
                     <FiUsers size={16} className="text-gray-400" />
-                    <span>{experience.targetAgeMin}세 ~ {experience.targetAgeMax}세</span>
+                    <span>
+                      {experience.targetAgeMin}세 ~ {experience.targetAgeMax}세
+                    </span>
                   </div>
                 )}
                 {experience.price && (

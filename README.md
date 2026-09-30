@@ -2,6 +2,20 @@
 
 아이와 함께 참여할 수 있는 공공기관, 박물관, 과학관, 기업 공장견학 등의 저가·무료·희소 체험 프로그램을 발견하고, 선착순 접수 시작일을 놓치지 않도록 추적하는 개인용 예약 시스템입니다.
 
+## 🌐 인터넷 주소로 쓰기 (설치 필요 없음)
+
+**https://imsplendid8.github.io/game-app** 에서 PC·휴대폰 어디서나 바로 열립니다.
+
+- 프로그램 정보는 매일 아침 6시에 GitHub Actions가 서울시 API에서 가져와 다시 배포합니다.
+  바로 새로 가져오려면 대시보드의 **데이터 수집 → 지금 수집하기** 를 누르고, 열린 GitHub 화면에서 **Run workflow** 를 누르세요.
+- 서울시 인증키는 저장소 **Settings → Secrets and variables → Actions → New repository secret** 에
+  이름 `SEOUL_OPENAPI_KEY` 로 넣습니다. 이 값은 공개되지 않습니다.
+- 예약·후기·찜은 **그 브라우저에만** 저장됩니다(서버 없음). 기기를 옮기거나 브라우저 기록을 지우기 전에
+  **프로필 → 백업** 에서 파일로 저장해 두세요.
+- 로그인 화면은 없습니다. 주소를 아는 사람은 누구나 화면을 볼 수 있지만, 예약 내용은 각자 자기 브라우저에만 있습니다.
+
+> 매일 자동 수집은 이 워크플로(`.github/workflows/pages.yml`)가 `main` 브랜치에 있어야 동작합니다.
+
 ## 🪟 Windows에서 쓰기 (터미널 필요 없음)
 
 1. [Docker Desktop](https://www.docker.com/products/docker-desktop/)을 설치합니다. (처음 한 번)

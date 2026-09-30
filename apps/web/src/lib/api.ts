@@ -1,4 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
+import { STATIC_MODE } from './staticMode';
+import { LocalApiClient } from './localApi';
 
 export interface LatestCrawl {
   adapterName: string;
@@ -278,4 +280,7 @@ class ApiClient {
   }
 }
 
-export const apiClient = new ApiClient();
+/** 서버 ApiClient의 공개 메서드 전부. 정적 모드 클라이언트도 이것을 빠짐없이 구현해야 한다. */
+export type ApiClientContract = { [K in keyof ApiClient]: ApiClient[K] };
+
+export const apiClient: ApiClientContract = STATIC_MODE ? new LocalApiClient() : new ApiClient();

@@ -3,13 +3,17 @@ import { useRouter } from 'next/router';
 import { useAuthStore } from '@/store/authStore';
 import { apiClient } from '@/lib/api';
 import { MainLayout } from '@/components/layouts/MainLayout';
+import { DataBackupCard } from '@/components/DataBackupCard';
+import { STATIC_MODE } from '@/lib/staticMode';
 import { FiEdit2, FiSave, FiX, FiLock } from 'react-icons/fi';
 
 export default function ProfilePage() {
   const router = useRouter();
   const { user, isLoading, isAuthenticated, setUser } = useAuthStore();
   const [isEditing, setIsEditing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'profile' | 'children' | 'notifications' | 'password'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'children' | 'notifications' | 'password' | 'backup'>(
+    'profile',
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [formData, setFormData] = useState({
@@ -119,7 +123,8 @@ export default function ProfilePage() {
 
         {/* Tabs */}
         <div className="flex gap-2 border-b border-gray-200">
-          {(['profile', 'children', 'notifications', 'password'] as const).map((tab) => (
+          {/* 로그인이 없는 정적 배포에서는 비밀번호 대신 백업 탭 */}
+          {(['profile', 'children', 'notifications', STATIC_MODE ? 'backup' : 'password'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -133,6 +138,7 @@ export default function ProfilePage() {
               {tab === 'children' && '자녀'}
               {tab === 'notifications' && '알림'}
               {tab === 'password' && '비밀번호'}
+              {tab === 'backup' && '백업'}
             </button>
           ))}
         </div>
@@ -374,6 +380,8 @@ export default function ProfilePage() {
             </div>
           </div>
         )}
+
+        {activeTab === 'backup' && <DataBackupCard />}
       </div>
     </MainLayout>
   );

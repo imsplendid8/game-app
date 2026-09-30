@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import { STATIC_MODE } from '@/lib/staticMode';
+import { getLocalProfile } from '@/lib/localApi';
 
 export interface User {
   id: string;
@@ -65,6 +67,12 @@ export const useAuthStore = create<AuthState>((set, _get) => ({
   },
 
   hydrate: () => {
+    if (typeof window !== 'undefined' && STATIC_MODE) {
+      // 서버 없는 배포: 로그인 없이 이 브라우저의 프로필로 바로 쓴다.
+      // 데이터가 이 브라우저에만 있어 다른 사람에게 보이지 않는다.
+      set({ user: getLocalProfile(), isAuthenticated: true, isLoading: false });
+      return;
+    }
     if (typeof window !== 'undefined') {
       const accessToken = localStorage.getItem('accessToken');
       const refreshToken = localStorage.getItem('refreshToken');
