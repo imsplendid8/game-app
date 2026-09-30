@@ -4,6 +4,9 @@ import { useAuthStore } from '@/store/authStore';
 import { useBookmarkStore } from '@/store/bookmarkStore';
 import { apiClient } from '@/lib/api';
 import { MainLayout } from '@/components/layouts/MainLayout';
+import { EligibilityBadges } from '@/components/EligibilityBadges';
+import { STATIC_MODE } from '@/lib/staticMode';
+import type { ProgramEligibility } from '@/lib/eligibility';
 import {
   FiArrowLeft,
   FiBookmark,
@@ -22,6 +25,8 @@ interface Experience {
   description?: string;
   targetAgeMin?: number | string;
   targetAgeMax?: number | string;
+  targetInfo?: string | null;
+  eligibility?: ProgramEligibility;
 }
 
 export default function ExperienceDetailPage() {
@@ -216,8 +221,23 @@ export default function ExperienceDetailPage() {
               </div>
             )}
 
+            {/* 참여 대상: 기관 문구 + 우리 아이 참여 가능 여부 */}
+            {STATIC_MODE && (experience.targetInfo || experience.eligibility) && (
+              <div className="bg-blue-50 rounded-lg p-6 border border-blue-200 space-y-2">
+                <div className="flex items-center gap-3">
+                  <FiUsers className="text-blue-600" size={24} />
+                  <p className="font-semibold text-gray-900">참여 대상</p>
+                </div>
+                <EligibilityBadges
+                  targetInfo={experience.targetInfo}
+                  eligibility={experience.eligibility}
+                  detailed
+                />
+              </div>
+            )}
+
             {/* Age Group Info */}
-            {experience.targetAgeMin && experience.targetAgeMax && (
+            {!STATIC_MODE && experience.targetAgeMin && experience.targetAgeMax && (
               <div className="bg-blue-50 rounded-lg p-6 border border-blue-200">
                 <div className="flex items-center gap-3">
                   <FiUsers className="text-blue-600" size={24} />
@@ -251,7 +271,7 @@ export default function ExperienceDetailPage() {
 
               {/* Info */}
               <div className="space-y-3 mb-6 pb-6 border-b border-gray-200">
-                {experience.targetAgeMin && experience.targetAgeMax && (
+                {!STATIC_MODE && experience.targetAgeMin && experience.targetAgeMax && (
                   <div className="flex items-center gap-2 text-sm text-gray-700">
                     <FiUsers size={16} className="text-gray-400" />
                     <span>

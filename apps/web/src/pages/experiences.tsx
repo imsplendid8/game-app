@@ -4,7 +4,20 @@ import { useAuthStore } from '@/store/authStore';
 import { useBookmarkStore } from '@/store/bookmarkStore';
 import { apiClient } from '@/lib/api';
 import { MainLayout } from '@/components/layouts/MainLayout';
-import { FiSearch, FiFilter, FiDollarSign, FiUsers, FiBookmark, FiStar } from 'react-icons/fi';
+import { EligibilityBadges } from '@/components/EligibilityBadges';
+import { STATIC_MODE } from '@/lib/staticMode';
+import { getChildren } from '@/lib/children';
+import type { Child, EligibilityFilter, ProgramEligibility } from '@/lib/eligibility';
+import Link from 'next/link';
+import {
+  FiSearch,
+  FiFilter,
+  FiDollarSign,
+  FiUsers,
+  FiBookmark,
+  FiStar,
+  FiCalendar,
+} from 'react-icons/fi';
 
 interface Experience {
   id: string;
@@ -20,6 +33,8 @@ interface Experience {
   rating?: number;
   reviewCount?: number;
   externalSource?: string;
+  targetInfo?: string | null;
+  eligibility?: ProgramEligibility;
 }
 
 interface SearchResponse {
@@ -43,6 +58,8 @@ export default function ExperiencesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalResults, setTotalResults] = useState(0);
   const [ratings, setRatings] = useState<Record<string, number>>({});
+  const [children, setChildren] = useState<Child[]>([]);
+  const [eligibility, setEligibility] = useState<EligibilityFilter>('all');
 
   const itemsPerPage = 12;
 
@@ -54,6 +71,7 @@ export default function ExperiencesPage() {
 
   useEffect(() => {
     hydrate();
+    if (STATIC_MODE) setChildren(getChildren());
   }, [hydrate]);
 
   useEffect(() => {
@@ -79,6 +97,7 @@ export default function ExperiencesPage() {
         const response: SearchResponse = await apiClient.searchExperiences({
           search: searchQuery || undefined,
           ageGroup: ageGroupParam,
+          eligibility: STATIC_MODE ? eligibility : undefined,
           sort: sortBy,
           limit: itemsPerPage,
           offset: (currentPage - 1) * itemsPerPage,
@@ -109,7 +128,7 @@ export default function ExperiencesPage() {
     };
 
     fetchExperiences();
-  }, [isAuthenticated, searchQuery, selectedAgeGroup, sortBy, currentPage]);
+  }, [isAuthenticated, searchQuery, selectedAgeGroup, eligibility, sortBy, currentPage]);
 
   if (isLoading || !isAuthenticated) {
     return (
@@ -134,7 +153,10 @@ export default function ExperiencesPage() {
         name: exp.programName,
         institution: exp.institution.institutionName,
         price: Number(exp.price) || 0,
-        ageGroup: exp.targetAgeMin && exp.targetAgeMax ? `${Number(exp.targetAgeMin)}-${Number(exp.targetAgeMax)}` : '',
+        ageGroup:
+          exp.targetAgeMin && exp.targetAgeMax
+            ? `${Number(exp.targetAgeMin)}-${Number(exp.targetAgeMax)}`
+            : '',
         rating: ratings[exp.id] || 0,
         bookmarkedAt: new Date().toISOString(),
       });
@@ -230,30 +252,62 @@ export default function ExperiencesPage() {
           )}
         </div>
 
-        {/* Age Group Filter */}
-        <div className="flex gap-2 flex-wrap">
-          {['전체', '4-6세', '6-10세', '10-14세', '14-18세'].map((age) => (
-            <button
-              key={age}
-              onClick={() => {
-                setSelectedAgeGroup(selectedAgeGroup === age ? null : age);
-                setCurrentPage(1);
-              }}
-              className={`px-4 py-2 rounded-full font-medium transition-colors ${
-                selectedAgeGroup === age
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              {age}
-            </button>
-          ))}
-        </div>
+        {/* 누가 갈 수 있나요 (정적 모드: 등록한 아이 생일로 판단) */}
+        {STATIC_MODE ? (
+          <div className="space-y-2">
+            <p className="text-sm font-semibold text-gray-900">누가 갈 수 있나요?</p>
+            {children.length === 0 ? (
+              <p className="text-sm text-gray-600">
+                <Link href="/profile" className="text-blue-600 underline">
+                  프로필 → 자녀
+                </Link>
+                에 아이 생일을 넣으면 아이별로 참여 가능한 프로그램만 골라 볼 수 있어요.
+              </p>
+            ) : (
+              <div className="flex gap-2 flex-wrap">
+                {eligibilityOptions(children).map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => {
+                      setEligibility(option.value);
+                      setCurrentPage(1);
+                    }}
+                    title={option.hint}
+                    className={`px-4 py-2 rounded-full font-medium transition-colors ${
+                      eligibility === option.value
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="flex gap-2 flex-wrap">
+            {['전체', '4-6세', '6-10세', '10-14세', '14-18세'].map((age) => (
+              <button
+                key={age}
+                onClick={() => {
+                  setSelectedAgeGroup(selectedAgeGroup === age ? null : age);
+                  setCurrentPage(1);
+                }}
+                className={`px-4 py-2 rounded-full font-medium transition-colors ${
+                  selectedAgeGroup === age
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {age}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Results Info */}
-        <div className="text-sm text-gray-600">
-          총 {totalResults}개의 프로그램
-        </div>
+        <div className="text-sm text-gray-600">총 {totalResults}개의 프로그램</div>
 
         {/* Experiences Grid */}
         {isLoadingData ? (
@@ -269,9 +323,7 @@ export default function ExperiencesPage() {
               >
                 {/* Placeholder Image */}
                 <div className="w-full h-48 bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center text-blue-400">
-                  <svg width="80" height="80" viewBox="0 0 80 80" fill="currentColor">
-                    <path d="M40 0C17.9 0 0 17.9 0 40s17.9 40 40 40 40-17.9 40-40S62.1 0 40 0zm0 72c-17.6 0-32-14.4-32-32s14.4-32 32-32 32 14.4 32 32-14.4 32-32 32z" />
-                  </svg>
+                  <FiCalendar size={64} />
                 </div>
 
                 {/* Content */}
@@ -287,12 +339,16 @@ export default function ExperiencesPage() {
                         {exp.price.toLocaleString()}원
                       </div>
                     )}
-                    {exp.targetAgeMin && exp.targetAgeMax && (
+                    {!STATIC_MODE && exp.targetAgeMin && exp.targetAgeMax && (
                       <div className="flex items-center gap-2">
                         <FiUsers size={16} />
                         {getAgeGroupLabel(exp.targetAgeMin, exp.targetAgeMax)}
                       </div>
                     )}
+                  </div>
+
+                  <div className="mb-3">
+                    <EligibilityBadges targetInfo={exp.targetInfo} eligibility={exp.eligibility} />
                   </div>
 
                   {/* Rating */}
@@ -330,9 +386,7 @@ export default function ExperiencesPage() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12 text-gray-600">
-            검색 결과가 없습니다.
-          </div>
+          <div className="text-center py-12 text-gray-600">검색 결과가 없습니다.</div>
         )}
 
         {/* Pagination */}
@@ -377,4 +431,39 @@ export default function ExperiencesPage() {
       </div>
     </MainLayout>
   );
+}
+
+function eligibilityOptions(
+  children: Child[]
+): Array<{ value: EligibilityFilter; label: string; hint: string }> {
+  const options: Array<{ value: EligibilityFilter; label: string; hint: string }> = [
+    { value: 'all', label: '전체', hint: '모든 프로그램' },
+    {
+      value: 'family',
+      label: '온 가족 함께',
+      hint: '나이 조건이 없거나 가족 대상이고, 아이 모두 참여할 수 있는 프로그램',
+    },
+  ];
+  if (children.length > 1) {
+    options.push({
+      value: 'kids',
+      label: '아이 모두',
+      hint: '등록한 아이 모두 참여할 수 있는 프로그램',
+    });
+  }
+  for (const child of children) {
+    options.push({
+      value: `with:${child.id}`,
+      label: `${child.name} 가능`,
+      hint: `${child.name} 참여 가능 (다른 아이는 상관없음)`,
+    });
+    if (children.length > 1) {
+      options.push({
+        value: `only:${child.id}`,
+        label: `${child.name}만`,
+        hint: `아이들 중 ${child.name}만 참여 가능`,
+      });
+    }
+  }
+  return options;
 }

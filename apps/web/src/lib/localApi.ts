@@ -1,6 +1,14 @@
 import type { ApiClientContract, LatestCrawl } from './api';
 import { BASE_PATH } from './staticMode';
 import { daysFromToday, parseYmd, toLocalYmd } from './bookingDates';
+import { CHILDREN_KEY, getChildren, isValidChild } from './children';
+import {
+  evaluateProgram,
+  matchesEligibility,
+  referenceDate,
+  type Child,
+  type EligibilityFilter,
+} from './eligibility';
 
 /**
  * 서버 없이(GitHub Pages) 돌 때 쓰는 API 클라이언트.
@@ -23,6 +31,8 @@ interface StaticProgram {
   bookingCloseAt: string | null;
   price: number | null;
   ageGroup: string | null;
+  /** 기관이 적은 참여 대상 원문 (예전 파일에는 없을 수 있다) */
+  targetInfo?: string | null;
   targetAgeMin: number | null;
   targetAgeMax: number | null;
   bookingMethod: string;
@@ -97,6 +107,8 @@ export interface BackupFile {
   preferences: Record<string, unknown>;
   notificationReads: string[];
   bookmarks: unknown[];
+  /** 예전 백업에는 없다 */
+  children?: Child[];
 }
 
 // ── localStorage ───────────────────────────────────────────
@@ -163,6 +175,7 @@ export function exportLocalData(): BackupFile {
     preferences: read(KEY.preferences, {}),
     notificationReads: read(KEY.notificationReads, []),
     bookmarks: read(KEY.bookmarks, []),
+    children: getChildren(),
   };
 }
 
@@ -184,6 +197,7 @@ export function importLocalData(data: unknown): { bookings: number } {
   write(KEY.preferences, backup.preferences ?? {});
   write(KEY.notificationReads, backup.notificationReads ?? []);
   write(KEY.bookmarks, backup.bookmarks ?? []);
+  if (Array.isArray(backup.children)) write(CHILDREN_KEY, backup.children.filter(isValidChild));
   return { bookings: backup.bookings.length };
 }
 
@@ -204,7 +218,19 @@ function loadPrograms(): Promise<ProgramsFile> {
   return programsPromise;
 }
 
-function toExperience(program: StaticProgram) {
+function eligibilityOf(program: StaticProgram, children: Child[], today: Date) {
+  return evaluateProgram(
+    program.targetInfo,
+    children,
+    referenceDate(program.experienceDate, today)
+  );
+}
+
+function toExperience(
+  program: StaticProgram,
+  children: Child[] = getChildren(),
+  today = new Date()
+) {
   return {
     id: program.id,
     programName: program.programName,
@@ -221,6 +247,8 @@ function toExperience(program: StaticProgram) {
     bookingOpenAt: program.bookingOpenAt,
     bookingCloseAt: program.bookingCloseAt,
     status: program.status,
+    targetInfo: program.targetInfo ?? null,
+    eligibility: eligibilityOf(program, children, today),
   };
 }
 
@@ -295,7 +323,9 @@ export class LocalApiClient implements ApiClientContract {
   // 프로그램
   async getExperiences() {
     const { programs } = await loadPrograms();
-    return programs.map(toExperience);
+    const children = getChildren();
+    const today = new Date();
+    return programs.map((p) => toExperience(p, children, today));
   }
 
   async searchExperiences(params: Record<string, unknown>) {
@@ -304,14 +334,25 @@ export class LocalApiClient implements ApiClientContract {
       .trim()
       .toLowerCase();
     const ageGroup = params.ageGroup ? String(params.ageGroup) : '';
+    const eligibility = (
+      params.eligibility ? String(params.eligibility) : 'all'
+    ) as EligibilityFilter;
     const limit = Number(params.limit) || 12;
     const offset = Number(params.offset) || 0;
+    const children = getChildren();
+    const today = new Date();
 
     let list = programs.filter((p) => {
       if (search) {
         const haystack =
-          `${p.programName} ${p.institutionName} ${p.description ?? ''}`.toLowerCase();
+          `${p.programName} ${p.institutionName} ${p.description ?? ''} ${p.targetInfo ?? ''}`.toLowerCase();
         if (!haystack.includes(search)) return false;
+      }
+      if (
+        eligibility !== 'all' &&
+        !matchesEligibility(eligibilityOf(p, children, today), eligibility)
+      ) {
+        return false;
       }
       return ageGroup ? matchesAgeGroup(p, ageGroup) : true;
     });
@@ -333,7 +374,10 @@ export class LocalApiClient implements ApiClientContract {
         );
     }
 
-    return { data: list.slice(offset, offset + limit).map(toExperience), total: list.length };
+    return {
+      data: list.slice(offset, offset + limit).map((p) => toExperience(p, children, today)),
+      total: list.length,
+    };
   }
 
   async getBookingSchedule(days = 14) {
