@@ -30,6 +30,8 @@ export interface ExperienceData {
   capacity?: number;
   price?: number;
   ageGroup?: string;
+  /** 기관이 적은 참여 대상 원문 (예: "초등 1~3학년 및 보호자", "만 5~7세") */
+  targetInfo?: string;
   bookingMethod: 'FIRST_COME' | 'LOTTERY' | 'ALWAYS_AVAILABLE';
   status: 'OPENING_SOON' | 'OPEN' | 'CLOSED' | 'UNKNOWN';
   externalSource: string;

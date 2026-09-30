@@ -19,6 +19,8 @@ export interface StaticProgram {
   /** 무료 0, 금액을 모르면 null */
   price: number | null;
   ageGroup: string | null;
+  /** 참여 대상 원문. 웹에서 아이별 참여 가능 여부를 판단한다 */
+  targetInfo: string | null;
   targetAgeMin: number | null;
   targetAgeMax: number | null;
   bookingMethod: ExperienceData['bookingMethod'];
@@ -74,6 +76,7 @@ export function toStaticProgram(program: ExperienceData): StaticProgram {
     bookingCloseAt: valid(program.bookingCloseAt)?.toISOString() ?? null,
     price: program.price ?? null,
     ageGroup: program.ageGroup ?? null,
+    targetInfo: program.targetInfo ?? null,
     targetAgeMin: ages.min,
     targetAgeMax: ages.max,
     bookingMethod: program.bookingMethod,

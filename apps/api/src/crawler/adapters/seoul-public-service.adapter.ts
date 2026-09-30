@@ -187,6 +187,7 @@ export class SeoulPublicServiceAdapter extends BaseAdapter {
       bookingCloseAt: this.parseSeoulDate(row.RCPTENDDT),
       price: row.PAYATNM?.includes('무료') ? 0 : undefined,
       ageGroup: this.getAgeGroup(row.USETGTINFO ?? '') || undefined,
+      targetInfo: decodeHtml(row.USETGTINFO) || undefined,
       bookingMethod: 'FIRST_COME',
       status: this.mapStatus(row.SVCSTATNM),
       externalSource: service,
