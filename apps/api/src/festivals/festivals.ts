@@ -49,7 +49,7 @@ export interface FestivalsFile {
 type HttpGet = (url: string, params?: Record<string, string | number>) => Promise<unknown>;
 
 const defaultGet: HttpGet = async (url, params) =>
-  (await axios.get(url, { params, timeout: 30000, headers: { 'User-Agent': 'WITHKIDS/1.0' } }))
+  (await axios.get(url, { params, timeout: 120000, headers: { 'User-Agent': 'WITHKIDS/1.0' } }))
     .data;
 
 const ymd = (value: string | undefined | null): string | null => {
@@ -106,7 +106,18 @@ export function mapSeoulCulture(row: SeoulCultureRow): Festival | null {
   };
 }
 
-const SEOUL_PAGE = 1000;
+// 문화행사는 설명이 길어 1000건씩이면 응답이 느리다
+const SEOUL_PAGE = 300;
+
+/** 느린 공공 API를 위해 한 번 더 시도한다 */
+async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (error) {
+    if (axios.isAxiosError(error) && !error.response) return fn();
+    throw error;
+  }
+}
 
 export async function fetchSeoulFestivals(
   apiKey: string,
@@ -116,7 +127,9 @@ export async function fetchSeoulFestivals(
   const festivals: Festival[] = [];
   for (let start = 1; ; start += SEOUL_PAGE) {
     const end = start + SEOUL_PAGE - 1;
-    const data = (await get(`${base}/${apiKey}/json/culturalEventInfo/${start}/${end}/`)) as {
+    const data = (await withRetry(() =>
+      get(`${base}/${apiKey}/json/culturalEventInfo/${start}/${end}/`)
+    )) as {
       culturalEventInfo?: {
         list_total_count?: number;
         RESULT?: { CODE?: string; MESSAGE?: string };
