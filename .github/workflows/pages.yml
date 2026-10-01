@@ -45,6 +45,14 @@ jobs:
           SEOUL_OPENAPI_KEY: ${{ secrets.SEOUL_OPENAPI_KEY }}
           TZ: Asia/Seoul
 
+      # 서울·근교 축제 (서울 문화행사 + 한국관광공사). 키가 없거나 실패해도 배포는 계속한다.
+      - name: Collect festivals
+        run: npm run export:festivals --workspace=apps/api -- ../web/public/data/festivals.json
+        env:
+          SEOUL_OPENAPI_KEY: ${{ secrets.SEOUL_OPENAPI_KEY }}
+          TOUR_API_KEY: ${{ secrets.TOUR_API_KEY }}
+          TZ: Asia/Seoul
+
       - name: Build static site
         run: npm run build --workspace=apps/web
         env:
