@@ -404,10 +404,20 @@ export default function ExperiencesPage() {
               ]}
             />
             {(useDate || sameDay) && (
-              <p className="text-xs text-gray-500">
-                서울시 자료의 운영 기간으로 골랐어요. 요일·회차별 운영은 상세 안내에서 확인해
-                주세요.
-              </p>
+              <div className="text-xs text-gray-500 space-y-0.5">
+                {useDate && (
+                  <p>
+                    이용일은 서울시 자료의 운영 기간으로 골랐어요. 요일·회차별 운영은 상세 안내에서
+                    확인해 주세요.
+                  </p>
+                )}
+                {sameDay && (
+                  <p>
+                    당일 예약·현장 접수는 상세 안내 문구로 판단했어요. 안내에 적힌 곳만 나오고, 근거
+                    문장은 상세 화면에서 볼 수 있어요.
+                  </p>
+                )}
+              </div>
             )}
           </div>
         )}
