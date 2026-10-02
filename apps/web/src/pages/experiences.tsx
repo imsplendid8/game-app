@@ -76,6 +76,7 @@ export default function ExperiencesPage() {
     'available'
   );
   const [useDate, setUseDate] = useState<'' | 'today' | 'weekend'>('');
+  const [sameDay, setSameDay] = useState<'' | 'online' | 'any'>('');
   const [areas, setAreas] = useState<Array<{ name: string; count: number }>>([]);
 
   const itemsPerPage = 12;
@@ -137,6 +138,7 @@ export default function ExperiencesPage() {
           area: STATIC_MODE && area ? area : undefined,
           booking: STATIC_MODE ? bookingFilter : undefined,
           useDate: STATIC_MODE && useDate ? useDate : undefined,
+          sameDay: STATIC_MODE && sameDay ? sameDay : undefined,
           sort: sortBy,
           limit: itemsPerPage,
           offset: (currentPage - 1) * itemsPerPage,
@@ -176,6 +178,7 @@ export default function ExperiencesPage() {
     area,
     bookingFilter,
     useDate,
+    sameDay,
     sortBy,
     currentPage,
   ]);
@@ -379,7 +382,28 @@ export default function ExperiencesPage() {
                 },
               ]}
             />
-            {useDate && (
+            <FilterRow
+              label="당일"
+              value={sameDay}
+              onChange={(v) => {
+                setSameDay(v);
+                setCurrentPage(1);
+              }}
+              options={[
+                { value: '', label: '상관없음', hint: '당일 예약 여부와 상관없이' },
+                {
+                  value: 'any',
+                  label: '당일 예약·현장 접수',
+                  hint: '당일 온라인 예약이 되거나 현장에서 접수할 수 있는 곳',
+                },
+                {
+                  value: 'online',
+                  label: '당일 온라인 예약',
+                  hint: '이용 당일에도 서울시 사이트에서 예약할 수 있는 곳',
+                },
+              ]}
+            />
+            {(useDate || sameDay) && (
               <p className="text-xs text-gray-500">
                 서울시 자료의 운영 기간으로 골랐어요. 요일·회차별 운영은 상세 안내에서 확인해
                 주세요.

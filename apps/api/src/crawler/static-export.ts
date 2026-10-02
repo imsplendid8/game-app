@@ -1,4 +1,5 @@
 import { Adapter, ExperienceData } from './adapter.interface';
+import { detectSameDay, type SameDayBooking } from './same-day';
 
 /**
  * 크롤 결과를 정적 웹(GitHub Pages)이 읽는 JSON 형태로 바꾼다.
@@ -30,6 +31,9 @@ export interface StaticProgram {
   imageUrl: string | null;
   contact: string | null;
   statusLabel: string | null;
+  /** 당일 예약(online)·현장 접수(onsite)·당일 불가(no). 상세 안내 문구로 판단, 모르면 null */
+  sameDay: SameDayBooking | null;
+  sameDayNote: string | null;
   targetAgeMin: number | null;
   targetAgeMax: number | null;
   bookingMethod: ExperienceData['bookingMethod'];
@@ -67,6 +71,11 @@ function parseAges(ageGroup?: string): { min: number | null; max: number | null 
   return { min: numbers[0] ?? null, max: numbers[1] ?? null };
 }
 
+function sameDayFields(description?: string) {
+  const { status, note } = detectSameDay(description);
+  return { sameDay: status, sameDayNote: note };
+}
+
 export function toStaticProgram(program: ExperienceData): StaticProgram {
   const ages = parseAges(program.ageGroup);
   const valid = (date?: Date | null) => (date && !Number.isNaN(date.getTime()) ? date : null);
@@ -94,6 +103,7 @@ export function toStaticProgram(program: ExperienceData): StaticProgram {
     imageUrl: program.imageUrl ?? null,
     contact: program.contact ?? null,
     statusLabel: program.statusLabel ?? null,
+    ...sameDayFields(program.description),
     targetAgeMin: ages.min,
     targetAgeMax: ages.max,
     bookingMethod: program.bookingMethod,

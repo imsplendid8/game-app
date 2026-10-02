@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FiCalendar, FiClock, FiMapPin, FiPhone, FiTag, FiCreditCard } from 'react-icons/fi';
+import { FiCalendar, FiClock, FiMapPin, FiPhone, FiTag, FiCreditCard, FiZap } from 'react-icons/fi';
 import {
   bookingRangeLabel,
   bookingState,
@@ -23,7 +23,15 @@ export interface SeoulProgramFields {
   bookingCloseAt?: string | null;
   serviceStartDate?: string | null;
   serviceEndDate?: string | null;
+  sameDay?: 'online' | 'onsite' | 'no' | null;
+  sameDayNote?: string | null;
 }
+
+const SAME_DAY_LABEL = {
+  online: '당일 예약 가능',
+  onsite: '현장 접수 가능',
+  no: '당일 신청 불가',
+} as const;
 
 const TONE_CLASS: Record<StatusTone, string> = {
   open: 'bg-green-100 text-green-800',
@@ -40,6 +48,11 @@ export function ProgramBadges({ program }: { program: SeoulProgramFields }) {
       {(program.statusLabel || program.bookingOpenAt || program.bookingCloseAt) && (
         <span className={`px-2 py-0.5 rounded text-xs font-semibold ${TONE_CLASS[state]}`}>
           {bookingStateLabel(program)}
+        </span>
+      )}
+      {(program.sameDay === 'online' || program.sameDay === 'onsite') && (
+        <span className="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+          {SAME_DAY_LABEL[program.sameDay]}
         </span>
       )}
       {program.paymentInfo && (
@@ -92,6 +105,13 @@ export function ProgramInfoTable({
       <FiCalendar key="d" />,
       '이용 기간',
       servicePeriodLabel(program.serviceStartDate, program.serviceEndDate),
+    ],
+    [
+      <FiZap key="s" />,
+      '당일 이용',
+      program.sameDay
+        ? `${SAME_DAY_LABEL[program.sameDay]}${program.sameDayNote ? ` — "${program.sameDayNote}"` : ''}`
+        : null,
     ],
     [<FiCreditCard key="p" />, '요금', program.paymentInfo],
     [
