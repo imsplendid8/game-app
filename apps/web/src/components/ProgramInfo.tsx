@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { FiCalendar, FiClock, FiMapPin, FiPhone, FiTag, FiCreditCard } from 'react-icons/fi';
 import {
   bookingRangeLabel,
+  bookingState,
+  bookingStateLabel,
   bookingWindowLabel,
   safeImageUrl,
   servicePeriodLabel,
-  statusTone,
   type StatusTone,
 } from '@/lib/programInfo';
 
@@ -32,14 +33,13 @@ const TONE_CLASS: Record<StatusTone, string> = {
 };
 
 export function ProgramBadges({ program }: { program: SeoulProgramFields }) {
-  const label = program.statusLabel;
+  // 서울시 상태 이름은 하루 한 번 받은 것이라, 마감일·운영 종료일이 지났으면 마감으로 바꿔 보여준다
+  const state = bookingState(program);
   return (
     <div className="flex flex-wrap gap-1.5">
-      {label && (
-        <span
-          className={`px-2 py-0.5 rounded text-xs font-semibold ${TONE_CLASS[statusTone(label, program.status)]}`}
-        >
-          {label}
+      {(program.statusLabel || program.bookingOpenAt || program.bookingCloseAt) && (
+        <span className={`px-2 py-0.5 rounded text-xs font-semibold ${TONE_CLASS[state]}`}>
+          {bookingStateLabel(program)}
         </span>
       )}
       {program.paymentInfo && (

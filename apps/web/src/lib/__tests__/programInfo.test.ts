@@ -1,5 +1,8 @@
 import {
   bookingRangeLabel,
+  bookingState,
+  bookingStateLabel,
+  servicePeriodOverlaps,
   bookingWindowLabel,
   safeImageUrl,
   servicePeriodLabel,
@@ -75,5 +78,45 @@ describe('safeImageUrl', () => {
     expect(safeImageUrl('//x/a.png')).toBe('https://x/a.png');
     expect(safeImageUrl('javascript:alert(1)')).toBeNull();
     expect(safeImageUrl(null)).toBeNull();
+  });
+});
+
+describe('bookingState', () => {
+  const at = (m: number, d: number, h = 0) => new Date(2026, m - 1, d, h).toISOString();
+
+  it('접수 중 / 예정 / 마감', () => {
+    expect(bookingState({ statusLabel: '접수중', bookingCloseAt: at(10, 20) }, NOW)).toBe('open');
+    expect(bookingState({ statusLabel: '안내중', bookingOpenAt: at(10, 5) }, NOW)).toBe('soon');
+    expect(bookingState({ statusLabel: '접수중', bookingOpenAt: at(10, 5) }, NOW)).toBe('soon');
+    expect(bookingState({ statusLabel: '예약마감' }, NOW)).toBe('closed');
+  });
+
+  it('상태 이름이 접수중이어도 마감일·운영 종료일이 지났으면 마감', () => {
+    expect(bookingState({ statusLabel: '접수중', bookingCloseAt: at(9, 29) }, NOW)).toBe('closed');
+    expect(bookingState({ statusLabel: '접수중', serviceEndDate: '2026-09-29' }, NOW)).toBe(
+      'closed'
+    );
+  });
+
+  it('표시 문구', () => {
+    expect(bookingStateLabel({ statusLabel: '접수중' }, NOW)).toBe('접수 중');
+    expect(bookingStateLabel({ statusLabel: '안내중' }, NOW)).toBe('접수 예정');
+    expect(bookingStateLabel({ statusLabel: '예약마감' }, NOW)).toBe('예약마감');
+    expect(bookingStateLabel({ statusLabel: '접수중', bookingCloseAt: at(9, 1) }, NOW)).toBe(
+      '마감'
+    );
+  });
+});
+
+describe('servicePeriodOverlaps', () => {
+  it('이용 기간이 그날·그 주말과 겹치는지', () => {
+    expect(servicePeriodOverlaps('2015-09-23', '2026-10-31', '2026-10-03', '2026-10-04')).toBe(
+      true
+    );
+    expect(servicePeriodOverlaps('2026-10-05', '2026-10-05', '2026-10-03', '2026-10-04')).toBe(
+      false
+    );
+    expect(servicePeriodOverlaps('2026-10-04', null, '2026-10-03', '2026-10-04')).toBe(true);
+    expect(servicePeriodOverlaps(null, null, '2026-10-03', '2026-10-04')).toBe(false);
   });
 });

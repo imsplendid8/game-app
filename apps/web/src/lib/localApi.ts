@@ -2,6 +2,8 @@ import type { ApiClientContract, LatestCrawl } from './api';
 import { BASE_PATH } from './staticMode';
 import { daysFromToday, parseYmd, toLocalYmd } from './bookingDates';
 import { CHILDREN_KEY, getChildren, isValidChild } from './children';
+import { bookingState, servicePeriodOverlaps, type BookingState } from './programInfo';
+import { periodRange } from './festivals';
 import {
   evaluateProgram,
   matchesEligibility,
@@ -370,6 +372,19 @@ export class LocalApiClient implements ApiClientContract {
       params.eligibility ? String(params.eligibility) : 'all'
     ) as EligibilityFilter;
     const area = params.area ? String(params.area) : '';
+    // 접수: available(접수 중+예정) / open / soon / all
+    const booking = params.booking ? String(params.booking) : 'all';
+    // 이용일: today / weekend
+    const useDate = params.useDate ? String(params.useDate) : '';
+    const now = new Date();
+    const useRange: [string, string] | null =
+      useDate === 'today'
+        ? [toLocalYmd(now), toLocalYmd(now)]
+        : useDate === 'weekend'
+          ? periodRange('weekend', now)
+          : null;
+    const matchesBooking = (state: BookingState) =>
+      booking === 'all' || (booking === 'available' ? state !== 'closed' : state === booking);
     const limit = Number(params.limit) || 12;
     const offset = Number(params.offset) || 0;
     const children = getChildren();
@@ -382,6 +397,18 @@ export class LocalApiClient implements ApiClientContract {
         if (!haystack.includes(search)) return false;
       }
       if (area && (p.area || '') !== area) return false;
+      if (!matchesBooking(bookingState(p, now))) return false;
+      if (
+        useRange &&
+        !servicePeriodOverlaps(
+          p.serviceStartDate ?? p.experienceDate,
+          p.serviceEndDate,
+          useRange[0],
+          useRange[1]
+        )
+      ) {
+        return false;
+      }
       if (
         eligibility !== 'all' &&
         !matchesEligibility(eligibilityOf(p, children, today), eligibility)

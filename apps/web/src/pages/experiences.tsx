@@ -71,6 +71,11 @@ export default function ExperiencesPage() {
   const [children, setChildren] = useState<Child[]>([]);
   const [eligibility, setEligibility] = useState<EligibilityFilter>('all');
   const [area, setArea] = useState('');
+  // 기본은 신청할 수 있는 것(접수 중+예정)만
+  const [bookingFilter, setBookingFilter] = useState<'available' | 'open' | 'soon' | 'all'>(
+    'available'
+  );
+  const [useDate, setUseDate] = useState<'' | 'today' | 'weekend'>('');
   const [areas, setAreas] = useState<Array<{ name: string; count: number }>>([]);
 
   const itemsPerPage = 12;
@@ -130,6 +135,8 @@ export default function ExperiencesPage() {
           ageGroup: ageGroupParam,
           eligibility: STATIC_MODE ? eligibility : undefined,
           area: STATIC_MODE && area ? area : undefined,
+          booking: STATIC_MODE ? bookingFilter : undefined,
+          useDate: STATIC_MODE && useDate ? useDate : undefined,
           sort: sortBy,
           limit: itemsPerPage,
           offset: (currentPage - 1) * itemsPerPage,
@@ -161,7 +168,17 @@ export default function ExperiencesPage() {
     };
 
     fetchExperiences();
-  }, [isAuthenticated, searchQuery, selectedAgeGroup, eligibility, area, sortBy, currentPage]);
+  }, [
+    isAuthenticated,
+    searchQuery,
+    selectedAgeGroup,
+    eligibility,
+    area,
+    bookingFilter,
+    useDate,
+    sortBy,
+    currentPage,
+  ]);
 
   if (isLoading || !isAuthenticated) {
     return (
@@ -323,6 +340,53 @@ export default function ExperiencesPage() {
             </div>
           )}
         </div>
+
+        {/* 접수 상태 · 이용일 */}
+        {STATIC_MODE && (
+          <div className="space-y-3">
+            <FilterRow
+              label="접수"
+              value={bookingFilter}
+              onChange={(v) => {
+                setBookingFilter(v);
+                setCurrentPage(1);
+              }}
+              options={[
+                {
+                  value: 'available',
+                  label: '신청 가능',
+                  hint: '접수 중이거나 접수 예정 (마감 제외)',
+                },
+                { value: 'open', label: '지금 접수 중', hint: '지금 바로 신청할 수 있는 것' },
+                { value: 'soon', label: '접수 예정', hint: '아직 접수 시작 전' },
+                { value: 'all', label: '마감 포함 전체', hint: '마감·종료된 것까지' },
+              ]}
+            />
+            <FilterRow
+              label="이용일"
+              value={useDate}
+              onChange={(v) => {
+                setUseDate(v);
+                setCurrentPage(1);
+              }}
+              options={[
+                { value: '', label: '언제든', hint: '이용 날짜 상관없이' },
+                { value: 'today', label: '오늘', hint: '오늘이 이용(운영) 기간에 들어가는 것' },
+                {
+                  value: 'weekend',
+                  label: '이번 주말',
+                  hint: '이번 토·일이 이용(운영) 기간에 들어가는 것',
+                },
+              ]}
+            />
+            {useDate && (
+              <p className="text-xs text-gray-500">
+                서울시 자료의 운영 기간으로 골랐어요. 요일·회차별 운영은 상세 안내에서 확인해
+                주세요.
+              </p>
+            )}
+          </div>
+        )}
 
         {/* 누가 갈 수 있나요 (정적 모드: 등록한 아이 생일로 판단) */}
         {STATIC_MODE ? (
@@ -560,3 +624,35 @@ function eligibilityOptions(
 }
 
 const AREA_KEY = 'withdkis.area';
+
+function FilterRow<T extends string>({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: T;
+  options: Array<{ value: T; label: string; hint: string }>;
+  onChange: (value: T) => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="text-sm font-semibold text-gray-900 w-12 shrink-0">{label}</span>
+      {options.map((option) => (
+        <button
+          key={option.value || 'any'}
+          onClick={() => onChange(option.value)}
+          title={option.hint}
+          className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+            value === option.value
+              ? 'border-blue-600 bg-blue-50 text-blue-700'
+              : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+          }`}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
+}
