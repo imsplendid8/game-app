@@ -276,6 +276,14 @@ function toExperience(
   };
 }
 
+/** 서울형 키즈카페 (회차 예약이 많아 목록을 가득 채운다) */
+export function isSeoulKidsCafe(program: {
+  programName: string;
+  institutionName: string;
+}): boolean {
+  return /서울형\s*키즈\s*카페/.test(`${program.programName} ${program.institutionName}`);
+}
+
 /** 지역(구) 목록과 프로그램 수. 서울 25개 구를 가나다순, 그 밖은 뒤로 */
 function areaCounts(programs: StaticProgram[]): Array<{ name: string; count: number }> {
   const counts = new Map<string, number>();
@@ -383,6 +391,7 @@ export class LocalApiClient implements ApiClientContract {
     const useDate = params.useDate ? String(params.useDate) : '';
     // 당일: online(당일 온라인 예약) / any(당일 예약 또는 현장 접수)
     const sameDay = params.sameDay ? String(params.sameDay) : '';
+    const excludeKidsCafe = Boolean(params.excludeKidsCafe);
     const now = new Date();
     const useRange: [string, string] | null =
       useDate === 'today'
@@ -404,6 +413,7 @@ export class LocalApiClient implements ApiClientContract {
         if (!haystack.includes(search)) return false;
       }
       if (area && (p.area || '') !== area) return false;
+      if (excludeKidsCafe && isSeoulKidsCafe(p)) return false;
       if (!matchesBooking(bookingState(p, now))) return false;
       if (sameDay === 'online' && p.sameDay !== 'online') return false;
       if (sameDay === 'any' && p.sameDay !== 'online' && p.sameDay !== 'onsite') return false;

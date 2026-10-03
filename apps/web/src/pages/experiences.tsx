@@ -77,6 +77,7 @@ export default function ExperiencesPage() {
   );
   const [useDate, setUseDate] = useState<'' | 'today' | 'weekend'>('');
   const [sameDay, setSameDay] = useState<'' | 'online' | 'any'>('');
+  const [excludeKidsCafe, setExcludeKidsCafe] = useState(false);
   const [areas, setAreas] = useState<Array<{ name: string; count: number }>>([]);
 
   const itemsPerPage = 12;
@@ -94,6 +95,7 @@ export default function ExperiencesPage() {
       // 자주 보는 구는 이 브라우저에 기억해 둔다
       try {
         setArea(localStorage.getItem(AREA_KEY) ?? '');
+        setExcludeKidsCafe(localStorage.getItem(KIDS_CAFE_KEY) === '1');
       } catch {
         /* 저장소를 못 쓰면 전체 지역 */
       }
@@ -139,6 +141,7 @@ export default function ExperiencesPage() {
           booking: STATIC_MODE ? bookingFilter : undefined,
           useDate: STATIC_MODE && useDate ? useDate : undefined,
           sameDay: STATIC_MODE && sameDay ? sameDay : undefined,
+          excludeKidsCafe: STATIC_MODE && excludeKidsCafe ? true : undefined,
           sort: sortBy,
           limit: itemsPerPage,
           offset: (currentPage - 1) * itemsPerPage,
@@ -179,6 +182,7 @@ export default function ExperiencesPage() {
     bookingFilter,
     useDate,
     sameDay,
+    excludeKidsCafe,
     sortBy,
     currentPage,
   ]);
@@ -403,6 +407,37 @@ export default function ExperiencesPage() {
                 },
               ]}
             />
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm font-semibold text-gray-900 w-12 shrink-0">제외</span>
+              <button
+                onClick={() => {
+                  const next = !excludeKidsCafe;
+                  setExcludeKidsCafe(next);
+                  setCurrentPage(1);
+                  try {
+                    if (next) localStorage.setItem(KIDS_CAFE_KEY, '1');
+                    else localStorage.removeItem(KIDS_CAFE_KEY);
+                  } catch {
+                    /* 무시 */
+                  }
+                }}
+                aria-pressed={excludeKidsCafe}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+                  excludeKidsCafe
+                    ? 'border-blue-600 bg-blue-50 text-blue-700'
+                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <span
+                  className={`w-4 h-4 rounded border flex items-center justify-center text-[10px] ${
+                    excludeKidsCafe ? 'bg-blue-600 border-blue-600 text-white' : 'border-gray-400'
+                  }`}
+                >
+                  {excludeKidsCafe ? '✓' : ''}
+                </span>
+                서울형 키즈카페 빼고 보기
+              </button>
+            </div>
             {(useDate || sameDay) && (
               <div className="text-xs text-gray-500 space-y-0.5">
                 {useDate && (
@@ -658,6 +693,7 @@ function eligibilityOptions(
 }
 
 const AREA_KEY = 'withdkis.area';
+const KIDS_CAFE_KEY = 'withdkis.excludeKidsCafe';
 
 function FilterRow<T extends string>({
   label,
